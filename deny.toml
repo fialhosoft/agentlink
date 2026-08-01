@@ -1,0 +1,36 @@
+# cargo-deny — supply-chain policy.
+#
+# agentlink is meant to be adopted as shared infrastructure, so its dependency
+# surface is kept small and its licensing unambiguous.
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+
+[licenses]
+version = 2
+# Permissive licences only. Anything copyleft would undermine the reason
+# Apache-2.0 was chosen (see docs/adr — patent grant, commercial adoption).
+allow = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+]
+confidence-threshold = 0.93
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

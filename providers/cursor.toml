@@ -1,0 +1,23 @@
+# Cursor — https://cursor.com
+#
+# Cursor reads AGENTS.md natively. Skills use the shared Agent Skills format but
+# live under .cursor/skills/, so only placement differs.
+#
+# Source: https://cursor.com/docs/skills
+
+schema = 1
+id = "cursor"
+name = "Cursor"
+homepage = "https://cursor.com"
+docs = "https://cursor.com/docs/skills"
+
+[[capability]]
+resource = "instructions"
+strategy = "native"
+path = "AGENTS.md"
+
+[[capability]]
+resource = "skills"
+strategy = "link"
+path = ".cursor/skills"
+note = "Cursor walks .cursor/skills/ recursively; skill name comes from the SKILL.md folder."

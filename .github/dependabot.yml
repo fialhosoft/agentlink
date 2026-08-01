@@ -1,0 +1,30 @@
+version: 2
+
+# Renovate was considered and rejected for this project: Dependabot needs no
+# hosted app or extra configuration repository, and with a dependency list this
+# small (serde, toml, thiserror, clap, anyhow, junction) Renovate's superior
+# grouping and scheduling would solve a problem we do not have.
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One pull request for routine bumps keeps the review queue focused on
+      # provider contributions, which is where attention is worth spending.
+      rust-dependencies:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci(deps)"

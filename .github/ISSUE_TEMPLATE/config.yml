@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/agentlink-dev/agentlink/discussions
+    about: Discussions are the right place for questions, ideas and design debates.
+  - name: Security vulnerability
+    url: https://github.com/agentlink-dev/agentlink/security/advisories/new
+    about: Please report privately, never in a public issue.

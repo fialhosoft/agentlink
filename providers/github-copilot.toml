@@ -1,0 +1,23 @@
+# GitHub Copilot — https://github.com/features/copilot
+#
+# Copilot (VS Code, CLI and cloud agent) reads AGENTS.md natively and loads
+# Agent Skills from .github/skills/.
+#
+# Source: https://github.blog/changelog/2025-12-18-github-copilot-now-supports-agent-skills/
+
+schema = 1
+id = "github-copilot"
+name = "GitHub Copilot"
+homepage = "https://github.com/features/copilot"
+docs = "https://code.visualstudio.com/docs/agent-customization/agent-skills"
+
+[[capability]]
+resource = "instructions"
+strategy = "native"
+path = "AGENTS.md"
+
+[[capability]]
+resource = "skills"
+strategy = "link"
+path = ".github/skills"
+note = "Shared by Copilot in VS Code, Copilot CLI and the Copilot cloud agent."

@@ -1,0 +1,23 @@
+# OpenCode — https://opencode.ai
+#
+# OpenCode reads AGENTS.md natively. Skills live under .opencode/skills/ and are
+# loaded on demand through its native `skill` tool.
+#
+# Source: https://opencode.ai/docs/skills/
+
+schema = 1
+id = "opencode"
+name = "OpenCode"
+homepage = "https://opencode.ai"
+docs = "https://opencode.ai/docs/skills/"
+
+[[capability]]
+resource = "instructions"
+strategy = "native"
+path = "AGENTS.md"
+
+[[capability]]
+resource = "skills"
+strategy = "link"
+path = ".opencode/skills"
+note = "Plural directory names are canonical; singular forms are legacy aliases."

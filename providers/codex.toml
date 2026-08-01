@@ -1,0 +1,25 @@
+# OpenAI Codex CLI — https://developers.openai.com/codex
+#
+# Codex authored the AGENTS.md convention, and its skill resolver already walks
+# $REPO_ROOT/.agents/skills/ in addition to .codex/skills/. Both capabilities are
+# native: agentlink writes nothing for this provider.
+#
+# Source: https://developers.openai.com/codex/skills
+
+schema = 1
+id = "codex"
+name = "OpenAI Codex CLI"
+homepage = "https://developers.openai.com/codex"
+docs = "https://developers.openai.com/codex/skills"
+
+[[capability]]
+resource = "instructions"
+strategy = "native"
+path = "AGENTS.md"
+note = "Codex originated the AGENTS.md convention."
+
+[[capability]]
+resource = "skills"
+strategy = "native"
+path = ".agents/skills"
+note = "Codex resolves $REPO_ROOT/.agents/skills/ natively, alongside .codex/skills/."

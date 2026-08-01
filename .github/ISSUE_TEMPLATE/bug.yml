@@ -1,0 +1,52 @@
+name: Bug report
+description: Something behaved incorrectly
+labels: ["bug"]
+body:
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `agentlink doctor`
+      description: |
+        Please paste the full output. It reports link privileges, drift and stale
+        links, which covers most of what we would otherwise have to ask for.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. In a repo containing .claude/skills/…
+        2. Run `agentlink init`
+        3. …
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Windows 11 (Developer Mode off) / macOS 15 / Ubuntu 24.04
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: severity
+    attributes:
+      label: Impact
+      options:
+        - label: agentlink modified or removed a file it did not create
+          required: false
+    description: |
+      Tick the box above if any content was lost or overwritten. That is the one
+      failure mode this project treats as critical, and it will be prioritised
+      over everything else.

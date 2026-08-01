@@ -1,0 +1,20 @@
+/target
+**/*.rs.bk
+
+# npm packaging output
+/npm/dist
+
+# agentlink materialises each developer's agent paths locally; only the
+# canonical layout (AGENTS.md, .agents/) is committed. See docs/adr/0005.
+# The block below is maintained by `agentlink apply`.
+
+# >>> agentlink >>>
+# Materialised by `agentlink apply` from the canonical layout (AGENTS.md,
+# .agents/). Commit the canonical layout; these paths are per-developer.
+# Managed automatically — edits inside this block are overwritten.
+/.claude/skills
+/.cursor/skills
+/.github/skills
+/.opencode/skills
+/CLAUDE.md
+# <<< agentlink <<<

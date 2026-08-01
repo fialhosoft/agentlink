@@ -1,0 +1,10 @@
+# agentlink configuration — https://github.com/agentlink-dev/agentlink
+#
+# `providers` lists the agents to serve. Remove the key entirely to
+# serve every agent agentlink knows about, including ones added by
+# future releases.
+
+version = 1
+
+[gitignore]
+manage = true

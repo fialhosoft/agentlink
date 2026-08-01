@@ -1,0 +1,37 @@
+[package]
+name = "agentlink-core"
+description = "Domain model for agentlink: one brain for every AI coding agent"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+# Exposes the in-memory workspace so downstream crates can test against
+# simulated hosts (notably Windows without symlink privileges).
+testing = []
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+
+[lints.rust]
+# Modules and types are documented; `missing_docs` additionally demands prose on
+# every public field, which for self-describing names like `created: usize` adds
+# noise rather than meaning.
+missing_debug_implementations = "warn"
+unused_qualifications = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"

@@ -1,0 +1,25 @@
+# Google Antigravity (AGY) — https://antigravity.google
+#
+# Antigravity is the reference implementation of the canonical layout: it reads
+# AGENTS.md and <workspace>/.agents/skills/ directly. Both capabilities are
+# therefore `native` — agentlink writes nothing at all for this provider.
+#
+# Verified against AGY, AGY CLI and AGY IDE (all three read <root>/.agents/skills).
+# Source: https://atamel.dev/posts/2026/07-01_where_agy_agent_skills/
+
+schema = 1
+id = "antigravity"
+name = "Google Antigravity"
+homepage = "https://antigravity.google"
+docs = "https://codelabs.developers.google.com/getting-started-with-antigravity-skills"
+
+[[capability]]
+resource = "instructions"
+strategy = "native"
+path = "AGENTS.md"
+
+[[capability]]
+resource = "skills"
+strategy = "native"
+path = ".agents/skills"
+note = "Recognised by AGY, AGY CLI and AGY IDE at the workspace root."

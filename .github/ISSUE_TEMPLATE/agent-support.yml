@@ -1,0 +1,62 @@
+name: Agent support
+description: Request or report a change to how agentlink serves an AI coding agent
+title: "[agent] "
+labels: ["providers"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Adding an agent is **one TOML file and no code** — see
+        [CONTRIBUTING.md](https://github.com/agentlink-dev/agentlink/blob/main/CONTRIBUTING.md).
+        If you know the paths, a pull request is faster than this issue and very
+        welcome.
+
+  - type: input
+    id: agent
+    attributes:
+      label: Agent
+      placeholder: Windsurf, Cline, Zed, Roo Code, …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this about?
+      options:
+        - A new agent that is not supported yet
+        - An agent whose paths changed upstream
+        - An agent whose declared paths look wrong
+    validations:
+      required: true
+
+  - type: textarea
+    id: paths
+    attributes:
+      label: Where does this agent read from?
+      description: Project-level paths, and global ones if you know them.
+      placeholder: |
+        instructions: AGENTS.md (native) — or .windsurf/rules/
+        skills:       .windsurf/skills/
+    validations:
+      required: true
+
+  - type: input
+    id: docs
+    attributes:
+      label: Documentation link
+      description: The upstream page establishing these paths.
+    validations:
+      required: true
+
+  - type: textarea
+    id: verified
+    attributes:
+      label: Did you verify the behaviour?
+      description: |
+        The single most useful thing you can provide. Put a skill in
+        `.agents/skills/hello/SKILL.md`, run `agentlink apply`, start the agent
+        and confirm it actually discovers the skill. Documentation is often
+        aspirational; behaviour is not.
+      placeholder: |
+        Tested with <agent> v1.2.3 on macOS — the skill was discovered.

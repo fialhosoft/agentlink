@@ -1,0 +1,30 @@
+# Claude Code — https://claude.com/claude-code
+#
+# Claude Code is the only major agent that does NOT read AGENTS.md natively.
+# Tracking issue: https://github.com/anthropics/claude-code/issues/6235 (5.2k+ reactions)
+# Until that lands, `instructions` must be materialised. We prefer a real link so
+# the two paths are literally the same inode; the `import` fallback uses Claude
+# Code's own `@file` import syntax, which is officially supported and needs no
+# filesystem privileges.
+
+schema = 1
+id = "claude-code"
+name = "Claude Code"
+homepage = "https://claude.com/claude-code"
+docs = "https://docs.claude.com/en/docs/claude-code/memory"
+
+[[capability]]
+resource = "instructions"
+strategy = "link"
+path = "CLAUDE.md"
+note = "Claude Code reads CLAUDE.md, not AGENTS.md (anthropics/claude-code#6235)."
+
+[capability.fallback]
+strategy = "import"
+template = "@{canonical}\n"
+
+[[capability]]
+resource = "skills"
+strategy = "link"
+path = ".claude/skills"
+note = "Agent Skills open spec; identical SKILL.md format, different directory."

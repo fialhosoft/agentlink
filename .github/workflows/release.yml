@@ -1,0 +1,199 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to release (e.g. v0.0.1)
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Refuse to publish a tag whose version does not match the workspace, which is
+  # the most common way a release goes subtly wrong.
+  verify:
+    name: Verify tag matches Cargo.toml
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: check
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          tag_version="${tag#v}"
+          cargo_version=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          if [ "$tag_version" != "$cargo_version" ]; then
+            echo "::error::tag $tag does not match workspace version $cargo_version"
+            exit 1
+          fi
+          echo "version=$tag_version" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            npm: linux-x64
+            cross: true
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            npm: linux-arm64
+            cross: true
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            npm: darwin-x64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            npm: darwin-arm64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            npm: win32-x64
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
+            npm: win32-arm64
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.cross
+        run: cargo install cross --locked
+
+      - name: Build
+        shell: bash
+        run: |
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            cross build --release --target ${{ matrix.target }} -p agentlink-cli
+          else
+            cargo build --release --target ${{ matrix.target }} -p agentlink-cli
+          fi
+
+      - name: Package
+        shell: bash
+        run: |
+          version="${{ needs.verify.outputs.version }}"
+          name="agentlink-$version-${{ matrix.target }}"
+          mkdir -p "dist/$name"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "target/${{ matrix.target }}/release/agentlink.exe" "dist/$name/"
+          else
+            cp "target/${{ matrix.target }}/release/agentlink" "dist/$name/"
+          fi
+          cp README.md LICENSE CHANGELOG.md "dist/$name/"
+          cd dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a "$name.zip" "$name" > /dev/null
+          else
+            tar czf "$name.tar.gz" "$name"
+          fi
+          # Checksums let anyone verify a download independently of GitHub.
+          for f in "$name".*; do
+            if [ -f "$f" ]; then sha256sum "$f" > "$f.sha256" 2>/dev/null || shasum -a 256 "$f" > "$f.sha256"; fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.target }}
+          path: dist/*.*
+          if-no-files-found: error
+
+      # Kept separate from the archive so the npm packaging step gets a bare
+      # binary without having to unpack platform-specific archive formats.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.npm }}
+          path: |
+            target/${{ matrix.target }}/release/agentlink
+            target/${{ matrix.target }}/release/agentlink.exe
+          if-no-files-found: error
+
+  github-release:
+    name: Publish GitHub release
+    needs: [verify, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist
+      - name: Extract this version's changelog section
+        run: |
+          awk '/^## \[${{ needs.verify.outputs.version }}\]/{f=1;next} /^## \[/{f=0} f' \
+            CHANGELOG.md > release-notes.md
+          # Fall back to generated notes rather than shipping an empty release.
+          [ -s release-notes.md ] || echo "See CHANGELOG.md." > release-notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          body_path: release-notes.md
+          generate_release_notes: true
+
+  crates-io:
+    name: Publish to crates.io
+    needs: [verify, build]
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      # Order matters: dependencies must exist on the registry before dependents.
+      - run: cargo publish -p agentlink-core
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - run: cargo publish -p agentlink-fs
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - run: cargo publish -p agentlink-cli
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  npm:
+    name: Publish to npm
+    needs: [verify, build]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: bin-*
+          path: binaries
+      - name: Assemble packages
+        run: node scripts/build-npm.mjs ${{ needs.verify.outputs.version }} binaries
+      - name: Publish
+        # Provenance ties each published tarball to this workflow run.
+        run: |
+          for pkg in npm/dist/*/; do
+            npm publish "$pkg" --access public --provenance
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,0 +1,19 @@
+# Default owner for everything.
+*                       @agentlink-dev/maintainers
+
+# Provider manifests are the contribution path we most want to keep open. They
+# carry no executable logic and are validated in CI, so review here is about
+# whether the paths are right — not about code.
+/providers/             @agentlink-dev/providers @agentlink-dev/maintainers
+
+# The safety-critical surface: anything that can remove, overwrite or relocate a
+# path. Changes here need a maintainer.
+/crates/agentlink-fs/   @agentlink-dev/maintainers
+/crates/agentlink-core/src/plan.rs   @agentlink-dev/maintainers
+/crates/agentlink-core/src/apply.rs  @agentlink-dev/maintainers
+/crates/agentlink-core/src/path.rs   @agentlink-dev/maintainers
+
+# Release and supply-chain configuration.
+/.github/workflows/     @agentlink-dev/maintainers
+/deny.toml              @agentlink-dev/maintainers
+/scripts/               @agentlink-dev/maintainers
