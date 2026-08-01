@@ -1,0 +1,23 @@
+# Normalise to LF in the repository so a Windows contributor's checkout never
+# produces whole-file diffs. This project ships a cross-platform tool; its own
+# repository should not be the thing that breaks on one of them.
+* text=auto eol=lf
+
+*.rs      text eol=lf
+*.toml    text eol=lf
+*.md      text eol=lf
+*.yml     text eol=lf
+*.mjs     text eol=lf
+*.js      text eol=lf
+
+# Batch files must keep CRLF or cmd.exe misparses them.
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+
+*.png     binary
+*.exe     binary
+
+# Keep generated and vendored files out of language statistics and diffs.
+Cargo.lock  -diff linguist-generated
+LICENSE     linguist-vendored
+CODE_OF_CONDUCT.md linguist-vendored
