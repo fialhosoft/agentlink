@@ -12,6 +12,7 @@
 # Materialised by `agentlink apply` from the canonical layout (AGENTS.md,
 # .agents/). Commit the canonical layout; these paths are per-developer.
 # Managed automatically — edits inside this block are overwritten.
+/.agentlink/lock.toml
 /.claude/skills
 /.cursor/skills
 /.github/skills

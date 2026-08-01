@@ -116,6 +116,14 @@ impl App {
             })
             .map(|step| step.target.to_string())
             .collect();
+
+        // The lock records what *this machine* materialised, including which
+        // primitive was used — a teammate on another platform legitimately has a
+        // different one. It is per-developer state, so committing it would
+        // produce conflicts and false ownership claims. The config, which is the
+        // shared decision, stays tracked.
+        entries.push(LOCK_FILE.to_string());
+
         entries.sort();
         entries.dedup();
 

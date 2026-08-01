@@ -339,4 +339,10 @@ fn the_gitignore_block_covers_every_materialised_path() {
     // The canonical layout is what gets committed, so it must never be ignored.
     assert!(!gitignore.contains("/AGENTS.md"));
     assert!(!gitignore.contains("/.agents/skills"));
+
+    // The lock is per-machine state — it records which primitive this host used,
+    // which legitimately differs across a team — so it must be ignored.
+    assert!(gitignore.contains("/.agentlink/lock.toml"), "{gitignore}");
+    // The config is the shared decision and must stay tracked.
+    assert!(!gitignore.contains("/.agentlink/config.toml"));
 }
