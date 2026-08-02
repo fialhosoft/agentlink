@@ -20,6 +20,7 @@ agentlink-domain.workspace = true
 agentlink-fs.workspace = true
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
+dialoguer = { version = "0.12", default-features = false }
 
 [dev-dependencies]
 agentlink-domain = { workspace = true, features = ["testing"] }

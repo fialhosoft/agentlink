@@ -35,6 +35,14 @@ impl Ui {
         Self { color, quiet }
     }
 
+    /// Whether it is safe to ask the user a question.
+    ///
+    /// Both ends have to be a terminal: piping output into a file or a CI log
+    /// means nobody would see the prompt, and a prompt nobody sees is a hang.
+    pub fn interactive(self) -> bool {
+        !self.quiet && std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
+    }
+
     /// Prints unless `--quiet` was given. Errors and warnings bypass this.
     pub fn say(self, line: impl AsRef<str>) {
         if !self.quiet {

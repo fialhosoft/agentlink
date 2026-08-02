@@ -346,3 +346,111 @@ fn the_gitignore_block_covers_every_materialised_path() {
     // The config is the shared decision and must stay tracked.
     assert!(!gitignore.contains("/.agentlink/config.toml"));
 }
+
+/// Rewrites the provider list the way `providers --select` would, which needs a
+/// terminal these tests do not have.
+fn select_providers(root: &Path, ids: &[&str]) {
+    let path = root.join(".agentlink/config.toml");
+    let list = ids
+        .iter()
+        .map(|id| format!("\"{id}\""))
+        .collect::<Vec<_>>()
+        .join(", ");
+    fs::write(
+        &path,
+        format!("version = 1\nproviders = [{list}]\n\n[gitignore]\nmanage = true\n"),
+    )
+    .unwrap();
+}
+
+#[test]
+fn an_explicit_provider_list_creates_nothing_for_the_others() {
+    // The whole point: a repository that uses two agents does not grow four more
+    // directories.
+    let repo = claude_only_repo();
+    let root = repo.path();
+
+    run(root, &["init", "--providers", "claude-code,antigravity"]);
+    let result = run(root, &["adopt"]);
+    assert_eq!(result.code, 0, "{}", result.stdout);
+
+    assert!(root.join(".claude/skills/code-review/SKILL.md").exists());
+    for path in [".cursor", ".github/skills", ".opencode"] {
+        assert!(
+            !root.join(path).exists(),
+            "{path} was created for an agent nobody selected:\n{}",
+            result.stdout
+        );
+    }
+
+    let config = fs::read_to_string(root.join(".agentlink/config.toml")).unwrap();
+    assert!(config.contains("antigravity"), "{config}");
+}
+
+#[test]
+fn an_unknown_provider_is_refused_with_the_valid_names() {
+    let repo = claude_only_repo();
+    let result = run(repo.path(), &["init", "--providers", "clod-code"]);
+
+    assert_eq!(result.code, 1);
+    assert!(!repo.path().join(".agentlink/config.toml").exists());
+}
+
+#[test]
+fn narrowing_the_provider_list_retires_what_agentlink_created() {
+    let repo = claude_only_repo();
+    let root = repo.path();
+    run(root, &["init"]);
+    run(root, &["adopt"]);
+    assert!(root.join(".cursor/skills").exists());
+
+    select_providers(root, &["claude-code", "antigravity"]);
+
+    // Announced before it happens: status and apply render the same plan, and a
+    // pending removal is pending work as far as CI is concerned.
+    let status = run(root, &["status", "--check"]);
+    assert_eq!(status.code, EXIT_PENDING, "{}", status.stdout);
+    assert!(
+        status.stdout.contains("retire") && status.stdout.contains(".cursor/skills"),
+        "status must announce the removal:\n{}",
+        status.stdout
+    );
+
+    let applied = run(root, &["apply"]);
+    assert_eq!(applied.code, 0, "{}", applied.stdout);
+    assert!(!root.join(".cursor/skills").exists());
+    assert!(!root.join(".opencode/skills").exists());
+
+    // The selected agents keep working, and the content itself is untouched.
+    assert!(root.join(".claude/skills/code-review/SKILL.md").exists());
+    assert!(root.join(".agents/skills/code-review/SKILL.md").exists());
+
+    let gitignore = fs::read_to_string(root.join(".gitignore")).unwrap();
+    assert!(!gitignore.contains("/.cursor/skills"), "{gitignore}");
+
+    let after = run(root, &["status", "--check"]);
+    assert_eq!(after.code, 0, "{}", after.stdout);
+}
+
+#[test]
+fn a_deselected_path_the_user_replaced_by_hand_is_never_removed() {
+    let repo = claude_only_repo();
+    let root = repo.path();
+    run(root, &["init"]);
+    run(root, &["adopt"]);
+
+    // The user replaces the link with a directory of their own.
+    fs::remove_dir(root.join(".cursor/skills")).unwrap();
+    fs::create_dir_all(root.join(".cursor/skills")).unwrap();
+    fs::write(root.join(".cursor/skills/NOTES.md"), "mine\n").unwrap();
+
+    select_providers(root, &["claude-code"]);
+    let result = run(root, &["apply"]);
+
+    assert_eq!(result.code, 0, "{}", result.stdout);
+    assert_eq!(
+        fs::read_to_string(root.join(".cursor/skills/NOTES.md")).unwrap(),
+        "mine\n",
+        "agentlink removed content it did not create"
+    );
+}

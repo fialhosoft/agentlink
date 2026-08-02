@@ -2,18 +2,22 @@
 
 use agentlink_domain::layout::AGENTS_MD_TEMPLATE;
 use agentlink_domain::model::Strategy;
-use agentlink_domain::{Layout, ResourceKind, Via, Workspace, apply as execute, gitignore};
+use agentlink_domain::{Layout, ResourceKind, Via, Workspace, apply as execute, detect, gitignore};
 use anyhow::Result;
 
 use crate::app::{App, rel};
-use crate::render;
 use crate::ui::{Ui, pad};
+use crate::{pick, render};
 
 /// Process exit code signalling "work is pending or blocked", for CI.
 pub const EXIT_PENDING: i32 = 2;
 
 /// Creates the canonical layout and materialises every capability.
-pub fn init(ui: Ui, dir: Option<std::path::PathBuf>) -> Result<i32> {
+pub fn init(
+    ui: Ui,
+    dir: Option<std::path::PathBuf>,
+    providers: Option<Vec<String>>,
+) -> Result<i32> {
     let mut app = App::load(dir)?;
 
     ui.say(format!(
@@ -21,6 +25,10 @@ pub fn init(ui: Ui, dir: Option<std::path::PathBuf>) -> Result<i32> {
         ui.bold("workspace"),
         ui.dim(&app.root.display().to_string())
     ));
+
+    if !app.initialised {
+        choose_providers(ui, &mut app, providers)?;
+    }
 
     // Seeding a canonical file that a provider path could have been adopted into
     // would turn a clean adoption into an unresolvable two-sided merge. So seed
@@ -51,6 +59,49 @@ pub fn init(ui: Ui, dir: Option<std::path::PathBuf>) -> Result<i32> {
     }
 
     run_apply(ui, &mut app, false, false)
+}
+
+/// Settles which agents this workspace serves.
+///
+/// Leaving `config.providers` unset means "every agent, including ones future
+/// releases add". That stays the answer whenever nobody can be asked — a script
+/// or a CI job — so automation keeps behaving exactly as it did before.
+fn choose_providers(ui: Ui, app: &mut App, explicit: Option<Vec<String>>) -> Result<()> {
+    if let Some(ids) = explicit {
+        app.registry.select(Some(&ids))?;
+        app.config.providers = Some(sorted(ids));
+        return Ok(());
+    }
+
+    if !ui.interactive() {
+        return Ok(());
+    }
+
+    let known: Vec<&agentlink_domain::Provider> = app.registry.all().iter().collect();
+    let detected = detect::evidence(&known, &app.ws)?;
+    let preselected = if detected.is_empty() {
+        app.registry.ids()
+    } else {
+        detected
+    };
+
+    if let Some(chosen) = pick::providers(ui, &app.registry, &preselected)? {
+        if chosen.is_empty() {
+            ui.say(format!(
+                "  {} no agents selected — agentlink will serve none until you run \
+                 `agentlink providers --select`",
+                ui.yellow("note:")
+            ));
+        }
+        app.config.providers = Some(sorted(chosen));
+    }
+    Ok(())
+}
+
+fn sorted(mut ids: Vec<String>) -> Vec<String> {
+    ids.sort();
+    ids.dedup();
+    ids
 }
 
 /// Materialises every capability that is not already correct.
@@ -212,9 +263,12 @@ pub fn clean(ui: Ui, dir: Option<std::path::PathBuf>, dry_run: bool) -> Result<i
     Ok(0)
 }
 
-/// Prints the capability matrix for every known provider.
-pub fn providers(ui: Ui, dir: Option<std::path::PathBuf>) -> Result<i32> {
+/// Prints the capability matrix for every known provider, or reopens the choice.
+pub fn providers(ui: Ui, dir: Option<std::path::PathBuf>, select: bool) -> Result<i32> {
     let app = App::load(dir)?;
+    if select {
+        return reselect(ui, app);
+    }
     let layout = Layout::default();
 
     let width = app
@@ -273,6 +327,43 @@ pub fn providers(ui: Ui, dir: Option<std::path::PathBuf>) -> Result<i32> {
         ui.dim("Add an agent by dropping a manifest into providers/ — no code changes needed.")
     ));
     Ok(0)
+}
+
+/// Reopens the provider choice, then reconciles the workspace with it.
+///
+/// Applying straight away is what makes deselecting an agent mean something: the
+/// links it no longer needs are retired in the same breath, so the repository
+/// never carries a path nobody reads.
+fn reselect(ui: Ui, mut app: App) -> Result<i32> {
+    app.require_initialised()?;
+    if !ui.interactive() {
+        anyhow::bail!(
+            "`--select` needs a terminal\n\
+             set the list directly instead: providers = [\"claude-code\", ...] in {}",
+            agentlink_domain::layout::CONFIG_FILE
+        );
+    }
+
+    let current = app
+        .config
+        .providers
+        .clone()
+        .unwrap_or_else(|| app.registry.ids());
+
+    let Some(chosen) = pick::providers(ui, &app.registry, &current)? else {
+        ui.say(format!("  {}", ui.dim("unchanged")));
+        return Ok(0);
+    };
+
+    app.config.providers = Some(sorted(chosen));
+    app.save_config()?;
+    ui.say(format!(
+        "  {} {}",
+        ui.green("saved"),
+        agentlink_domain::layout::CONFIG_FILE
+    ));
+
+    run_apply(ui, &mut app, false, false)
 }
 
 /// Diagnoses the environment and the workspace.
@@ -497,7 +588,7 @@ fn check(ui: Ui, ok: bool, label: &str, detail: &str) {
 }
 
 fn exit_for(plan: &agentlink_domain::Plan) -> i32 {
-    if plan.writes().count() > 0 || plan.blocked().count() > 0 {
+    if plan.writes().count() > 0 || plan.removals().count() > 0 || plan.blocked().count() > 0 {
         EXIT_PENDING
     } else {
         0

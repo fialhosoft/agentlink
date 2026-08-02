@@ -78,7 +78,9 @@ instead.
 ## Do not
 
 - Add a dependency without a clear justification; the surface is deliberately
-  small (`serde`, `toml`, `thiserror`, `clap`, `anyhow`, `junction`).
+  small (`serde`, `toml`, `thiserror`, `clap`, `anyhow`, `junction`, `dialoguer`
+  for the provider picker — terminal key handling is not something to hand-roll
+  across Windows and POSIX).
 - Introduce hard links. See [ADR 0003](docs/adr/0003-link-primitives.md) — they
   are undetectable after the fact and silently broken by atomic saves.
 - Invent configuration formats. The canonical layout is the community standard.

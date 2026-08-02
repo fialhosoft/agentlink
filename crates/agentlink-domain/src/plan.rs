@@ -33,6 +33,9 @@ pub enum Outcome {
     /// The target holds the only copy of this content: move it into the canonical
     /// location, then link back. This is the onboarding path for an existing repo.
     Adopt { via: Via },
+    /// This provider is no longer served, and what we made for it is still ours:
+    /// remove it and stop claiming it.
+    Retire { via: Via },
     /// Nothing to do, for a benign reason.
     Skip(Skip),
     /// Needs a human decision. Never resolved by guessing.
@@ -44,6 +47,9 @@ pub enum Outcome {
 pub enum Skip {
     /// The canonical resource does not exist yet, so there is nothing to share.
     CanonicalMissing,
+    /// A deselected provider's path no longer holds what agentlink put there, so
+    /// it is the user's now: the file stays and agentlink drops its claim.
+    Unmanaged,
 }
 
 /// Situations that require the user to choose.
@@ -81,7 +87,11 @@ pub struct Step {
 }
 
 impl Step {
-    /// Whether executing this step writes to the filesystem.
+    /// Whether executing this step materialises something at the target.
+    ///
+    /// Deliberately excludes [`Outcome::Retire`]: callers use this to decide what
+    /// a workspace now contains — a `.gitignore` block, for instance — and a path
+    /// on its way out belongs in neither.
     pub fn is_write(&self) -> bool {
         matches!(
             self.outcome,
@@ -90,6 +100,11 @@ impl Step {
                 | Outcome::Relink { .. }
                 | Outcome::Adopt { .. }
         )
+    }
+
+    /// Whether executing this step takes something away.
+    pub fn is_removal(&self) -> bool {
+        matches!(self.outcome, Outcome::Retire { .. })
     }
 
     pub fn is_blocked(&self) -> bool {
@@ -112,6 +127,11 @@ impl Plan {
     /// Steps needing a human decision.
     pub fn blocked(&self) -> impl Iterator<Item = &Step> {
         self.steps.iter().filter(|step| step.is_blocked())
+    }
+
+    /// Steps that would remove something agentlink created.
+    pub fn removals(&self) -> impl Iterator<Item = &Step> {
+        self.steps.iter().filter(|step| step.is_removal())
     }
 
     /// How many capabilities require no work at all — the number this project
@@ -141,7 +161,7 @@ impl Plan {
     pub fn is_clean(&self) -> bool {
         self.steps
             .iter()
-            .all(|step| !step.is_write() && !step.is_blocked())
+            .all(|step| !step.is_write() && !step.is_removal() && !step.is_blocked())
     }
 }
 
@@ -364,6 +384,88 @@ impl<'a> Planner<'a> {
             },
         }
     }
+}
+
+/// Decides what to do with paths the lock claims, for providers that are no
+/// longer served.
+///
+/// Narrowing the provider list would otherwise leave orphans behind: a
+/// `.cursor/skills` junction nobody maintains, still listed in `.gitignore`.
+/// These steps are part of the same plan as everything else, so `status`
+/// announces a removal before `apply` performs one.
+///
+/// The safety rule is the one that governs the whole tool: a target is removed
+/// only while it still *is* what agentlink created. A link replaced by a real
+/// directory, or a stub someone edited, resolves to [`Skip::Unmanaged`] — the
+/// content stays and agentlink simply stops claiming it.
+pub fn retire(
+    lock: &Lock,
+    selected: &[&Provider],
+    registry: &crate::registry::Registry,
+    ws: &dyn Workspace,
+) -> FsResult<Vec<Step>> {
+    let mut steps = Vec::new();
+    for entry in &lock.entries {
+        if selected.iter().any(|p| p.id == entry.provider) {
+            continue;
+        }
+
+        let outcome = match ws.probe(&entry.target)? {
+            Some(found) if still_ours(entry, &found, registry, ws)? => {
+                Outcome::Retire { via: entry.via }
+            }
+            // Already gone, or no longer what we made. Either way nothing is
+            // deleted and the claim is dropped, so the next run stays quiet.
+            _ => Outcome::Skip(Skip::Unmanaged),
+        };
+
+        steps.push(Step {
+            provider_id: entry.provider.clone(),
+            provider_name: registry
+                .get(&entry.provider)
+                .map_or_else(|| entry.provider.clone(), |p| p.name.clone()),
+            resource: entry.resource,
+            canonical: entry.canonical.clone(),
+            target: entry.target.clone(),
+            outcome,
+            note: None,
+            import_body: None,
+        });
+    }
+
+    steps.sort_by(|a, b| {
+        a.resource
+            .cmp(&b.resource)
+            .then_with(|| a.provider_id.cmp(&b.provider_id))
+    });
+    Ok(steps)
+}
+
+/// Whether what sits at a locked target is still the artefact agentlink made.
+fn still_ours(
+    entry: &crate::lock::LockEntry,
+    found: &Entry,
+    registry: &crate::registry::Registry,
+    ws: &dyn Workspace,
+) -> FsResult<bool> {
+    if entry.via.is_link() {
+        return Ok(found.link.is_some());
+    }
+    if !found.is_concrete() {
+        return Ok(false);
+    }
+    // An import stub is one line of our own generated text, so comparing it to
+    // what we would write today is an exact ownership test. A provider that has
+    // since been removed from the registry leaves nothing to compare against,
+    // which fails closed: the file is kept.
+    let expected = registry
+        .get(&entry.provider)
+        .and_then(|provider| provider.capability(entry.resource))
+        .and_then(|capability| capability.import_body(&entry.canonical));
+    Ok(match expected {
+        Some(expected) => ws.read(&entry.target)? == expected,
+        None => false,
+    })
 }
 
 #[cfg(test)]
@@ -762,5 +864,138 @@ mod tests {
                 (ResourceKind::Skills, "claude-code"),
             ]
         );
+    }
+
+    fn registry() -> crate::registry::Registry {
+        crate::registry::Registry::builtin(&Layout::default()).expect("shipped manifests")
+    }
+
+    fn locked(provider: &str, resource: ResourceKind, target: &str, via: Via) -> Lock {
+        let mut lock = Lock::default();
+        lock.record(LockEntry {
+            provider: provider.to_string(),
+            resource,
+            target: rel(target),
+            canonical: Layout::default().canonical(resource).clone(),
+            via,
+        });
+        lock
+    }
+
+    fn retire_with(ws: &FakeWorkspace, lock: &Lock, selected: &[&str]) -> Vec<Step> {
+        let registry = registry();
+        let providers: Vec<&Provider> = selected
+            .iter()
+            .map(|id| registry.get(id).expect("known provider"))
+            .collect();
+        retire(lock, &providers, &registry, ws).expect("planning")
+    }
+
+    #[test]
+    fn a_deselected_providers_link_is_retired() {
+        let ws = FakeWorkspace::unix();
+        ws.add_dir(".agents/skills");
+        ws.add_link(".cursor/skills", NodeKind::Dir, ".agents/skills");
+        let lock = locked(
+            "cursor",
+            ResourceKind::Skills,
+            ".cursor/skills",
+            Via::Symlink,
+        );
+
+        let steps = retire_with(&ws, &lock, &["claude-code"]);
+
+        assert_eq!(steps.len(), 1);
+        assert_eq!(steps[0].target.as_str(), ".cursor/skills");
+        assert_eq!(steps[0].outcome, Outcome::Retire { via: Via::Symlink });
+    }
+
+    #[test]
+    fn a_still_selected_provider_is_never_retired() {
+        let ws = FakeWorkspace::unix();
+        ws.add_dir(".agents/skills");
+        ws.add_link(".cursor/skills", NodeKind::Dir, ".agents/skills");
+        let lock = locked(
+            "cursor",
+            ResourceKind::Skills,
+            ".cursor/skills",
+            Via::Symlink,
+        );
+
+        assert!(retire_with(&ws, &lock, &["cursor", "claude-code"]).is_empty());
+    }
+
+    #[test]
+    fn a_deselected_path_the_user_took_over_is_never_removed() {
+        // The link became a real directory holding real skills. Whatever happened,
+        // that content is not ours to delete just because a name left a list.
+        let ws = FakeWorkspace::unix();
+        ws.add_dir(".agents/skills");
+        ws.add_file(".cursor/skills/deploy/SKILL.md", "---\nname: deploy\n---\n");
+        let lock = locked(
+            "cursor",
+            ResourceKind::Skills,
+            ".cursor/skills",
+            Via::Symlink,
+        );
+
+        let steps = retire_with(&ws, &lock, &["claude-code"]);
+
+        assert_eq!(steps[0].outcome, Outcome::Skip(Skip::Unmanaged));
+    }
+
+    #[test]
+    fn a_deselected_import_stub_is_retired_only_while_it_still_says_what_we_wrote() {
+        let ws = FakeWorkspace::unix();
+        ws.add_file("AGENTS.md", "# rules\n");
+        ws.add_file("CLAUDE.md", "@AGENTS.md\n");
+        let lock = locked(
+            "claude-code",
+            ResourceKind::Instructions,
+            "CLAUDE.md",
+            Via::Import,
+        );
+
+        let steps = retire_with(&ws, &lock, &["antigravity"]);
+        assert_eq!(steps[0].outcome, Outcome::Retire { via: Via::Import });
+
+        ws.add_file("CLAUDE.md", "@AGENTS.md\n\nAlso: never force push.\n");
+        let steps = retire_with(&ws, &lock, &["antigravity"]);
+        assert_eq!(steps[0].outcome, Outcome::Skip(Skip::Unmanaged));
+    }
+
+    #[test]
+    fn a_claim_on_something_already_gone_is_dropped_rather_than_repeated() {
+        let ws = FakeWorkspace::unix();
+        let lock = locked(
+            "cursor",
+            ResourceKind::Skills,
+            ".cursor/skills",
+            Via::Symlink,
+        );
+
+        let steps = retire_with(&ws, &lock, &["claude-code"]);
+
+        assert_eq!(steps[0].outcome, Outcome::Skip(Skip::Unmanaged));
+    }
+
+    #[test]
+    fn a_retirement_is_a_removal_not_a_write() {
+        // `.gitignore` is built from writes, so a path on its way out must not
+        // count as one.
+        let ws = FakeWorkspace::unix();
+        ws.add_dir(".agents/skills");
+        ws.add_link(".cursor/skills", NodeKind::Dir, ".agents/skills");
+        let lock = locked(
+            "cursor",
+            ResourceKind::Skills,
+            ".cursor/skills",
+            Via::Symlink,
+        );
+
+        let step = &retire_with(&ws, &lock, &["claude-code"])[0];
+
+        assert!(step.is_removal());
+        assert!(!step.is_write());
     }
 }

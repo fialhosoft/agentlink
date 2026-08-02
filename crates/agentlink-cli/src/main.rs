@@ -4,6 +4,7 @@
 
 mod app;
 mod commands;
+mod pick;
 mod render;
 mod ui;
 
@@ -42,8 +43,12 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Create the canonical layout and link every agent to it.
-    Init,
+    /// Create the canonical layout and link the agents this repository uses.
+    Init {
+        /// Serve only these agents, skipping the interactive picker.
+        #[arg(long, value_delimiter = ',', value_name = "ID,...")]
+        providers: Option<Vec<String>>,
+    },
 
     /// Materialise anything that is missing or out of date.
     #[command(alias = "sync")]
@@ -76,7 +81,11 @@ enum Command {
     Doctor,
 
     /// List every known agent and how each one is served.
-    Providers,
+    Providers {
+        /// Choose which agents to serve, and save the choice.
+        #[arg(long)]
+        select: bool,
+    },
 
     /// Remove everything agentlink created, leaving the canonical layout intact.
     Clean {
@@ -91,12 +100,12 @@ fn main() -> std::process::ExitCode {
     let ui = Ui::new(cli.color, cli.quiet);
 
     let result = match cli.command {
-        Command::Init => commands::init(ui, cli.dir),
+        Command::Init { providers } => commands::init(ui, cli.dir, providers),
         Command::Apply { dry_run, adopt } => commands::apply(ui, cli.dir, dry_run, adopt),
         Command::Status { check } => commands::status(ui, cli.dir, check),
         Command::Adopt { dry_run } => commands::adopt(ui, cli.dir, dry_run),
         Command::Doctor => commands::doctor(ui, cli.dir),
-        Command::Providers => commands::providers(ui, cli.dir),
+        Command::Providers { select } => commands::providers(ui, cli.dir, select),
         Command::Clean { dry_run } => commands::clean(ui, cli.dir, dry_run),
     };
 
