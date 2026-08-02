@@ -7,7 +7,7 @@ Thank you for helping. The single most valuable contribution to this project is
 
 This is one file. Really.
 
-Create `providers/<agent-id>.toml`:
+Create `crates/agentlink-core/providers/<agent-id>.toml`:
 
 ```toml
 # My Agent — https://example.com/my-agent

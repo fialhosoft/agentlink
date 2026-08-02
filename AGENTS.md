@@ -56,7 +56,8 @@ instead.
 
 - Paths in the domain are `RelPath`: normalised, always `/`-separated, and unable
   to escape the workspace. Never introduce a raw `PathBuf` into `agentlink-core`.
-- Adding an agent must stay a **single TOML file** in `providers/`. If a change
+- Adding an agent must stay a **single TOML file** in
+  `crates/agentlink-core/providers/`. If a change
   would require Rust to support a new agent, that is a design problem — see
   [ADR 0004](docs/adr/0004-providers-as-data.md).
 - `#![forbid(unsafe_code)]` in every crate. Windows junctions go through the

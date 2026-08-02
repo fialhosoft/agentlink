@@ -4,6 +4,13 @@
 //! list — is what makes "add an agent" a single-file change. A contributor drops
 //! `providers/<agent>.toml` in place and it is compiled in, validated by the
 //! registry tests, and shown by `agentlink providers` with no Rust edits at all.
+//!
+//! The directory lives *inside* this crate rather than at the workspace root.
+//! `cargo publish` only packages files under the crate root — it has no
+//! mechanism to pull in a workspace-sibling directory — so `providers/` living
+//! two levels up would build fine from a git checkout but produce a tarball on
+//! crates.io whose `build.rs` panics on `cargo install`. Keeping it here makes
+//! the local workspace build and the published crate identical by construction.
 
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
@@ -13,7 +20,7 @@ use std::{env, fs};
 fn main() {
     let manifest_dir =
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("cargo sets CARGO_MANIFEST_DIR"));
-    let providers_dir = manifest_dir.join("..").join("..").join("providers");
+    let providers_dir = manifest_dir.join("providers");
 
     println!("cargo:rerun-if-changed={}", providers_dir.display());
     println!("cargo:rerun-if-changed=build.rs");

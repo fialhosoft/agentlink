@@ -126,7 +126,7 @@ where a derived file genuinely can drift from its source.
 
 | To add | Change | Rust needed |
 |---|---|---|
-| An agent | one file in `providers/` | none |
+| An agent | one file in `crates/agentlink-core/providers/` | none |
 | A resource kind | a `ResourceKind` variant + canonical path in `layout.rs` | small |
 | A link mechanism | a `Via` variant + adapter arm | small, adapter-local |
 | A materialisation strategy (e.g. `render`) | a `Strategy` variant + planner arm | the real work |
