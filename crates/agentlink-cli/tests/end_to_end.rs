@@ -439,9 +439,14 @@ fn a_deselected_path_the_user_replaced_by_hand_is_never_removed() {
     run(root, &["init"]);
     run(root, &["adopt"]);
 
-    // The user replaces the link with a directory of their own.
-    fs::remove_dir(root.join(".cursor/skills")).unwrap();
-    fs::create_dir_all(root.join(".cursor/skills")).unwrap();
+    // The user replaces the link with a directory of their own. That link is a
+    // junction on Windows and a symlink elsewhere, and the two are unlinked by
+    // different calls.
+    let link = root.join(".cursor/skills");
+    fs::remove_dir(&link)
+        .or_else(|_| fs::remove_file(&link))
+        .unwrap();
+    fs::create_dir_all(&link).unwrap();
     fs::write(root.join(".cursor/skills/NOTES.md"), "mine\n").unwrap();
 
     select_providers(root, &["claude-code"]);
