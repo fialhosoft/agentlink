@@ -8,6 +8,8 @@ Entries below v0.1.0 describe a pre-release API that may change.
 
 ## [Unreleased]
 
+## [0.0.2] — 2026-08-02
+
 ### Added
 
 - **`agentlink init` asks which agents the repository uses.** A multi-select
@@ -61,5 +63,6 @@ without copying a single file.
 - `#![forbid(unsafe_code)]` across every crate.
 - No network access, no code execution, no telemetry.
 
-[Unreleased]: https://github.com/fialhosoft/agentlink/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/fialhosoft/agentlink/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/fialhosoft/agentlink/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/fialhosoft/agentlink/releases/tag/v0.0.1
