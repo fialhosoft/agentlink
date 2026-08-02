@@ -131,27 +131,78 @@ not `test_apply_3`. A failing test name should tell a stranger what broke.
 
 ## Commits and pull requests
 
-We use [Conventional Commits](https://www.conventionalcommits.org/). release-plz
-derives the version bump from the prefix and opens the release PR, so it is
-load-bearing. **We are pre-1.0**, where semver treats the whole crate as
-unstable, so `feat` and `fix` both land as a patch bump and only a breaking
-change moves the minor version:
+We use [Conventional Commits](https://www.conventionalcommits.org/) — commit
+subjects are for people reading the history. Provider additions are
+`feat(providers): add <agent>`.
 
-- `feat:`, `fix:` → patch bump (e.g. 0.1.2 → 0.1.3)
-- `feat!:` or a `BREAKING CHANGE:` footer → minor bump (e.g. 0.1.2 → 0.2.0)
-- `docs:`, `chore:`, `refactor:`, `test:`, `ci:` → no release
-
-Once agentlink reaches 1.0, this reverts to ordinary semver: `feat` → minor,
-`fix` → patch, `feat!`/`BREAKING CHANGE` → major.
-
-Provider additions are `feat(providers): add <agent>`.
-
-CHANGELOG.md itself is still hand-written, under `## [Unreleased]`, as part of
-the same pull request as the change — release-plz never touches it. Cutting a
-release means renaming that heading to `## [x.y.z] — date` inside the release
-PR before merging it.
+Release notes come from change files rather than commit subjects, so the prefix
+carries no versioning weight. That is the next section.
 
 Small pull requests, please. Each one should leave the project working.
+
+## Documenting a change
+
+**Every pull request that changes what a user sees adds a change file**, and CI
+fails without one. `CHANGELOG.md` is never edited by hand; the release compiles
+it from these files.
+
+```console
+knope document-change
+```
+
+That prompts for a type and a summary and writes `.changeset/<name>.md`. Writing
+the file yourself is equally fine:
+
+```md
+---
+default: minor
+---
+
+# `agentlink status` explains why a path is blocked
+
+Previously a blocked path reported only that it was blocked. It now names the
+file it collided with and the command that resolves it.
+```
+
+The `#` heading is what a reader sees in the release notes; the body is the
+detail, and a heading with no body renders as a plain bullet. The type sets both
+the changelog section and the version bump:
+
+| Type | Section | Use for |
+|---|---|---|
+| `major` | Breaking changes | An existing workspace stops working, or needs a migration |
+| `minor` | Added | A new command, flag, provider or capability |
+| `changed` | Changed | Different behaviour that breaks nothing |
+| `deprecated` | Deprecated | Still works, will be removed |
+| `removed` | Removed | Gone |
+| `patch` | Fixed | A bug fix |
+| `security` | Security | A vulnerability or a hardening change |
+
+We are **pre-1.0**, where semver treats the whole crate as unstable: `minor` and
+below all land as a patch bump (0.0.2 → 0.0.3), and `major` moves the minor
+(0.0.2 → 0.1.0). Describe the change honestly and let the version follow —
+inflating the type to force a version helps nobody.
+
+`knope prepare-release --dry-run` prints the resulting version and changelog
+section without changing anything. CI runs the same command, so malformed front
+matter fails on the pull request rather than at release.
+
+Work that changes nothing observable — refactors, tests, CI, documentation —
+takes the **`no changelog`** label on the pull request instead. Use it when
+nobody reading the release notes would care, not when the note is inconvenient.
+
+## How a release happens
+
+Nothing here is manual, and no tag is ever pushed by hand:
+
+1. Merging to `main` opens (or refreshes) a **release pull request**. It bumps
+   the workspace version, compiles the pending change files into `CHANGELOG.md`
+   and empties `.changeset/`.
+2. Merging *that* pull request tags the release and, in the same run, builds
+   every target and publishes the GitHub release, crates.io and npm.
+
+So a release is reviewable as a diff before it happens, and a maintainer merges
+exactly twice: your pull request, then the release pull request.
 
 ## Reporting a bug
 
