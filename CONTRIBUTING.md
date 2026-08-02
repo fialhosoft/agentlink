@@ -131,8 +131,8 @@ not `test_apply_3`. A failing test name should tell a stranger what broke.
 
 ## Commits and pull requests
 
-We use [Conventional Commits](https://www.conventionalcommits.org/). The release
-tooling derives version bumps and changelog entries from them, so the prefix is
+We use [Conventional Commits](https://www.conventionalcommits.org/). release-plz
+derives the version bump from the prefix and opens the release PR, so it is
 load-bearing:
 
 - `feat:` → minor bump
@@ -141,6 +141,11 @@ load-bearing:
 - `docs:`, `chore:`, `refactor:`, `test:`, `ci:` → no release
 
 Provider additions are `feat(providers): add <agent>`.
+
+CHANGELOG.md itself is still hand-written, under `## [Unreleased]`, as part of
+the same pull request as the change — release-plz never touches it. Cutting a
+release means renaming that heading to `## [x.y.z] — date` inside the release
+PR before merging it.
 
 Small pull requests, please. Each one should leave the project working.
 
