@@ -9,6 +9,8 @@
 //! deleting through one agent's path is immediately visible through every other.
 
 use std::fs;
+// Only used by the Windows-only `copy_tree` / `junction_create` helpers below.
+#[cfg(windows)]
 use std::path::Path;
 
 use agentlink_core::model::{Entry, LinkSupport, LinkTarget, NodeKind, Via};
@@ -306,6 +308,9 @@ fn the_workspace_root_is_free_of_windows_verbatim_prefixes() {
     );
 }
 
+// Only exercised by `a_junction_left_behind_by_a_move_is_reported_as_stale`,
+// which is itself Windows-only — junctions do not exist elsewhere.
+#[cfg(windows)]
 fn copy_tree(from: &Path, to: &Path) {
     for entry in fs::read_dir(from).unwrap() {
         let entry = entry.unwrap();
@@ -314,11 +319,8 @@ fn copy_tree(from: &Path, to: &Path) {
         if meta.file_type().is_symlink() {
             // Reproduce the reparse point verbatim, which is exactly how a naive
             // copy leaves a junction pointing at the original location.
-            #[cfg(windows)]
-            {
-                let raw = fs::read_link(entry.path()).unwrap();
-                let _ = junction_create(&raw, &target);
-            }
+            let raw = fs::read_link(entry.path()).unwrap();
+            let _ = junction_create(&raw, &target);
         } else if meta.is_dir() {
             fs::create_dir_all(&target).unwrap();
             copy_tree(&entry.path(), &target);
