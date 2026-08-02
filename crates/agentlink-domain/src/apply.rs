@@ -10,7 +10,7 @@
 //! * no removal is ever recursive.
 
 use crate::lock::{Lock, LockEntry};
-use crate::plan::{Outcome, Plan, Step};
+use crate::plan::{Outcome, Plan, Skip, Step};
 use crate::workspace::{FsResult, Workspace};
 
 /// What an [`apply`] run did.
@@ -20,6 +20,8 @@ pub struct ApplyReport {
     pub rewritten: usize,
     pub relinked: usize,
     pub adopted: usize,
+    /// Artefacts removed because their provider is no longer served.
+    pub retired: usize,
     /// Capabilities that were already correct, or needed nothing to begin with.
     pub unchanged: usize,
     /// Capabilities awaiting a human decision.
@@ -28,7 +30,7 @@ pub struct ApplyReport {
 
 impl ApplyReport {
     pub fn changed(&self) -> usize {
-        self.created + self.rewritten + self.relinked + self.adopted
+        self.created + self.rewritten + self.relinked + self.adopted + self.retired
     }
 
     /// Accumulates a later pass into this one.
@@ -42,6 +44,7 @@ impl ApplyReport {
         self.rewritten += later.rewritten;
         self.relinked += later.relinked;
         self.adopted += later.adopted;
+        self.retired += later.retired;
         self.unchanged = later.unchanged;
         self.blocked = later.blocked;
     }
@@ -56,7 +59,14 @@ pub fn apply(plan: &Plan, ws: &dyn Workspace, lock: &mut Lock) -> FsResult<Apply
 
     for step in &plan.steps {
         match &step.outcome {
-            Outcome::Native | Outcome::UpToDate { .. } | Outcome::Skip(_) => {
+            Outcome::Native | Outcome::UpToDate { .. } | Outcome::Skip(Skip::CanonicalMissing) => {
+                report.unchanged += 1;
+            }
+            // The path diverged from what we created, so it belongs to whoever
+            // changed it. Dropping the claim leaves the content untouched and
+            // stops agentlink reporting a path it no longer has any say over.
+            Outcome::Skip(Skip::Unmanaged) => {
+                lock.forget(&step.provider_id, step.resource);
                 report.unchanged += 1;
             }
             Outcome::Blocked(_) => {
@@ -85,6 +95,17 @@ pub fn apply(plan: &Plan, ws: &dyn Workspace, lock: &mut Lock) -> FsResult<Apply
                 materialise(step, *via, ws)?;
                 record(step, *via, lock);
                 report.adopted += 1;
+            }
+            Outcome::Retire { via } => {
+                // Only planned for a target the lock owns that still matches what
+                // we created, so nothing here can be the user's work.
+                if via.is_link() {
+                    ws.remove_link(&step.target, step.resource.node())?;
+                } else {
+                    ws.remove_file(&step.target)?;
+                }
+                lock.forget(&step.provider_id, step.resource);
+                report.retired += 1;
             }
         }
     }
@@ -356,5 +377,62 @@ mod tests {
 
         assert_eq!(report.rewritten, 1);
         assert_eq!(ws.raw_file("CLAUDE.md").as_deref(), Some("@AGENTS.md\n"));
+    }
+
+    /// Plans a retirement the way `agentlink apply` composes one, then executes it.
+    fn run_retiring(ws: &FakeWorkspace, lock: &mut Lock, selected: &[&str]) -> ApplyReport {
+        let registry = crate::registry::Registry::builtin(&Layout::default()).unwrap();
+        let providers: Vec<&Provider> = selected
+            .iter()
+            .map(|id| registry.get(id).expect("known provider"))
+            .collect();
+        let steps = crate::plan::retire(lock, &providers, &registry, ws).expect("planning");
+        apply(&Plan { steps }, ws, lock).expect("apply")
+    }
+
+    #[test]
+    fn retiring_removes_the_link_and_drops_the_claim() {
+        let ws = FakeWorkspace::unix();
+        ws.add_dir(".agents/skills");
+        ws.add_file(".agents/skills/deploy/SKILL.md", "---\nname: deploy\n---\n");
+        ws.add_link(".cursor/skills", NodeKind::Dir, ".agents/skills");
+        let mut lock = Lock::default();
+        lock.record(LockEntry {
+            provider: "cursor".into(),
+            resource: ResourceKind::Skills,
+            target: RelPath::new(".cursor/skills").unwrap(),
+            canonical: RelPath::new(".agents/skills").unwrap(),
+            via: Via::Symlink,
+        });
+
+        let report = run_retiring(&ws, &mut lock, &["claude-code"]);
+
+        assert_eq!(report.retired, 1);
+        assert!(!ws.exists(".cursor/skills"));
+        assert!(lock.entries.is_empty());
+        // A link was removed, never the tree it pointed at.
+        assert!(ws.exists(".agents/skills/deploy/SKILL.md"));
+    }
+
+    #[test]
+    fn a_deselected_path_the_user_took_over_survives_and_stops_being_claimed() {
+        let ws = FakeWorkspace::unix();
+        ws.add_dir(".agents/skills");
+        ws.add_file(".cursor/skills/deploy/SKILL.md", "---\nname: deploy\n---\n");
+        let mut lock = Lock::default();
+        lock.record(LockEntry {
+            provider: "cursor".into(),
+            resource: ResourceKind::Skills,
+            target: RelPath::new(".cursor/skills").unwrap(),
+            canonical: RelPath::new(".agents/skills").unwrap(),
+            via: Via::Symlink,
+        });
+
+        let report = run_retiring(&ws, &mut lock, &["claude-code"]);
+
+        assert_eq!(report.retired, 0);
+        assert!(ws.exists(".cursor/skills/deploy/SKILL.md"));
+        // Dropping the claim is what keeps the next run from reporting it again.
+        assert!(lock.entries.is_empty());
     }
 }

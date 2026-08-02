@@ -74,11 +74,22 @@ impl App {
     }
 
     /// Decides what would happen, without touching anything.
+    ///
+    /// Two halves: what the selected providers need, and what the deselected ones
+    /// left behind. Both are domain decisions; composing them here is what lets
+    /// `status` and `apply` share one plan.
     pub fn plan(&self, adopt: bool) -> Result<Plan> {
         let providers = self.providers()?;
-        Ok(Planner::new(&self.layout, &self.lock, self.ws.support())
+        let mut plan = Planner::new(&self.layout, &self.lock, self.ws.support())
             .with_adopt(adopt)
-            .plan(&providers, &self.ws)?)
+            .plan(&providers, &self.ws)?;
+        plan.steps.extend(plan::retire(
+            &self.lock,
+            &providers,
+            &self.registry,
+            &self.ws,
+        )?);
+        Ok(plan)
     }
 
     pub fn save_lock(&self) -> Result<()> {

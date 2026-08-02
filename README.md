@@ -79,12 +79,31 @@ drift *from*.
 ## Quick start
 
 ```console
-$ agentlink init      # create the canonical layout and link every agent
+$ agentlink init      # pick your agents, then link them to the canonical layout
 $ agentlink adopt     # or: absorb the .claude/ you already have
 $ agentlink status    # see exactly who reads what
 ```
 
-Onboarding an existing repository that has only ever used Claude Code:
+`init` asks which agents this repository actually uses, preselecting the ones it
+already finds:
+
+```console
+Which agents does this repository use? (space toggles, enter confirms)
+  [ ] antigravity     Google Antigravity — reads the canonical layout, costs nothing
+> [x] claude-code     Claude Code — CLAUDE.md, .claude/skills
+  [ ] codex           OpenAI Codex CLI — reads the canonical layout, costs nothing
+  [ ] cursor          Cursor — .cursor/skills
+  [ ] github-copilot  GitHub Copilot — .github/skills
+  [ ] opencode        OpenCode — .opencode/skills
+```
+
+Nothing is created for an agent you did not pick, and dropping one later — via
+`agentlink providers --select` — retires the links it no longer needs. Scripts
+are never prompted: without a terminal, or with `--providers claude-code,cursor`,
+`init` just gets on with it.
+
+Onboarding an existing repository that has only ever used Claude Code, with every
+agent selected:
 
 ```console
 $ agentlink adopt
@@ -170,12 +189,13 @@ workspace are refused. To try one before sending a pull request, drop it in
 
 | Command | Purpose |
 |---|---|
-| `agentlink init` | Create the canonical layout and materialise every capability |
+| `agentlink init` | Pick the agents this repository uses, then materialise their capabilities |
 | `agentlink adopt` | Move an agent's existing content into the canonical layout, then link it back |
 | `agentlink apply` | Materialise anything missing or out of date (idempotent) |
 | `agentlink status --check` | Exit `2` if anything is pending — for CI |
 | `agentlink doctor` | Diagnose privileges, drift and stale links |
 | `agentlink providers` | Show the capability matrix |
+| `agentlink providers --select` | Change which agents this repository serves |
 | `agentlink clean` | Remove everything agentlink created, keeping the canonical layout |
 
 ## How it treats your repository

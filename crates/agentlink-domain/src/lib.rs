@@ -44,6 +44,7 @@
 
 pub mod apply;
 pub mod config;
+pub mod detect;
 pub mod gitignore;
 pub mod layout;
 pub mod lock;

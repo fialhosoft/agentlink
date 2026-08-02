@@ -92,9 +92,24 @@ fn describe(ui: Ui, step: &Step) -> (String, String) {
                 ))
             ),
         ),
+        Outcome::Retire { via } => (
+            ui.yellow("retire"),
+            format!(
+                "{} {}",
+                step.target,
+                ui.dim(&format!("{} — no longer selected", mechanism(*via)))
+            ),
+        ),
         Outcome::Skip(Skip::CanonicalMissing) => (
             ui.dim("skip"),
             ui.dim(&format!("nothing at {} yet", step.canonical)),
+        ),
+        Outcome::Skip(Skip::Unmanaged) => (
+            ui.dim("kept"),
+            ui.dim(&format!(
+                "{} no longer matches what agentlink created — it is yours now",
+                step.target
+            )),
         ),
         Outcome::Blocked(reason) => (ui.red("blocked"), blocked_detail(ui, step, reason)),
     }
@@ -142,9 +157,12 @@ fn mechanism(via: Via) -> &'static str {
 }
 
 fn summary(ui: Ui, plan: &Plan) {
-    let total = plan.steps.len();
     let free = plan.free();
     let writes = plan.writes().count();
+    let removals = plan.removals().count();
+    // A retirement is a capability leaving, not one being served, so it is
+    // counted beside the total rather than inside it.
+    let total = plan.steps.len() - removals;
     let blocked = plan.blocked().count();
 
     ui.say("");
@@ -154,6 +172,9 @@ fn summary(ui: Ui, plan: &Plan) {
     ];
     if writes > 0 {
         parts.push(ui.cyan(&format!("{writes} to materialise")));
+    }
+    if removals > 0 {
+        parts.push(ui.yellow(&format!("{removals} to retire")));
     }
     if blocked > 0 {
         parts.push(ui.red(&format!("{blocked} blocked")));
@@ -236,6 +257,9 @@ pub fn report(ui: Ui, report: agentlink_domain::ApplyReport) {
     }
     if report.rewritten > 0 {
         parts.push(ui.green(&format!("{} rewritten", report.rewritten)));
+    }
+    if report.retired > 0 {
+        parts.push(ui.green(&format!("{} retired", report.retired)));
     }
     if report.blocked > 0 {
         parts.push(ui.red(&format!("{} blocked", report.blocked)));

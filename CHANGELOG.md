@@ -8,6 +8,20 @@ Entries below v0.1.0 describe a pre-release API that may change.
 
 ## [Unreleased]
 
+### Added
+
+- **`agentlink init` asks which agents the repository uses.** A multi-select
+  preselects the agents with content already in the repository, and the answer is
+  saved as an explicit `providers` list — so a repository using two agents no
+  longer grows directories for six. `agentlink providers --select` reopens the
+  choice. See [ADR 0006](docs/adr/0006-provider-selection.md).
+- **`init --providers claude-code,antigravity`** sets the list without a prompt.
+  Nothing is ever asked when stdin or stdout is not a terminal, so scripts and CI
+  keep serving every agent exactly as before.
+- **`retire` verdict.** Dropping an agent from the list removes what agentlink
+  created for it, announced by `status` before `apply` performs it. A path that
+  no longer matches what agentlink created is kept and simply disowned.
+
 ## [0.0.1] — 2026-08-01
 
 First release. Shares **instructions** and **skills** across six AI coding agents
