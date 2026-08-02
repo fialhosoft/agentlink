@@ -133,12 +133,16 @@ not `test_apply_3`. A failing test name should tell a stranger what broke.
 
 We use [Conventional Commits](https://www.conventionalcommits.org/). release-plz
 derives the version bump from the prefix and opens the release PR, so it is
-load-bearing:
+load-bearing. **We are pre-1.0**, where semver treats the whole crate as
+unstable, so `feat` and `fix` both land as a patch bump and only a breaking
+change moves the minor version:
 
-- `feat:` → minor bump
-- `fix:` → patch bump
-- `feat!:` or a `BREAKING CHANGE:` footer → major bump
+- `feat:`, `fix:` → patch bump (e.g. 0.1.2 → 0.1.3)
+- `feat!:` or a `BREAKING CHANGE:` footer → minor bump (e.g. 0.1.2 → 0.2.0)
 - `docs:`, `chore:`, `refactor:`, `test:`, `ci:` → no release
+
+Once agentlink reaches 1.0, this reverts to ordinary semver: `feat` → minor,
+`fix` → patch, `feat!`/`BREAKING CHANGE` → major.
 
 Provider additions are `feat(providers): add <agent>`.
 
