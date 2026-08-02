@@ -4,7 +4,7 @@
 
 **One brain for every AI coding agent — with zero file duplication.**
 
-[![CI](https://github.com/agentlink-dev/agentlink/actions/workflows/ci.yml/badge.svg)](https://github.com/agentlink-dev/agentlink/actions/workflows/ci.yml)
+[![CI](https://github.com/fialhosoft/agentlink/actions/workflows/ci.yml/badge.svg)](https://github.com/fialhosoft/agentlink/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/agentlink-cli.svg)](https://crates.io/crates/agentlink-cli)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
@@ -118,10 +118,10 @@ coincidence.**
 
 ```console
 # npm — ships a prebuilt binary per platform, no Rust needed
-npm install -g agentlink
+npm install -g @fialhosoft/agentlink
 
 # Homebrew
-brew install agentlink-dev/tap/agentlink
+brew install fialhosoft/tap/agentlink
 
 # Cargo
 cargo install agentlink-cli

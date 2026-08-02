@@ -74,7 +74,7 @@ pub const AGENTS_MD_TEMPLATE: &str = "\
 # AGENTS.md
 
 Shared instructions for every AI coding agent working in this repository.
-Managed with [agentlink](https://github.com/agentlink-dev/agentlink) — edit this
+Managed with [agentlink](https://github.com/fialhosoft/agentlink) — edit this
 file from any agent and the change is visible to all of them.
 
 ## Project

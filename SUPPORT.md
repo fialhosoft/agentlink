@@ -38,8 +38,8 @@ can use it immediately by dropping it in `.agentlink/providers/`.
 
 ## Asking a question
 
-- **Questions and ideas** → [GitHub Discussions](https://github.com/agentlink-dev/agentlink/discussions)
-- **Bugs and agent support requests** → [GitHub Issues](https://github.com/agentlink-dev/agentlink/issues)
+- **Questions and ideas** → [GitHub Discussions](https://github.com/fialhosoft/agentlink/discussions)
+- **Bugs and agent support requests** → [GitHub Issues](https://github.com/fialhosoft/agentlink/issues)
 - **Security** → see [SECURITY.md](SECURITY.md); please do not use public issues
 
 This is a volunteer-maintained project. Issues are usually triaged within a week.

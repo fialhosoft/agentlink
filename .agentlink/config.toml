@@ -1,4 +1,4 @@
-# agentlink configuration — https://github.com/agentlink-dev/agentlink
+# agentlink configuration — https://github.com/fialhosoft/agentlink
 #
 # `providers` lists the agents to serve. Remove the key entirely to
 # serve every agent agentlink knows about, including ones added by

@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Adding an agent is **one TOML file and no code** — see
-        [CONTRIBUTING.md](https://github.com/agentlink-dev/agentlink/blob/main/CONTRIBUTING.md).
+        [CONTRIBUTING.md](https://github.com/fialhosoft/agentlink/blob/main/CONTRIBUTING.md).
         If you know the paths, a pull request is faster than this issue and very
         welcome.
 

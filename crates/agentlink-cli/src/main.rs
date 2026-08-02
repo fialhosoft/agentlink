@@ -21,7 +21,7 @@ use crate::ui::{ColorChoice, Ui};
     version,
     about,
     long_about = None,
-    after_help = "Learn more: https://github.com/agentlink-dev/agentlink"
+    after_help = "Learn more: https://github.com/fialhosoft/agentlink"
 )]
 struct Cli {
     /// Operate on this directory instead of the current one.

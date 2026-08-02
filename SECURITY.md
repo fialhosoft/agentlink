@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please report privately through
-[GitHub Security Advisories](https://github.com/agentlink-dev/agentlink/security/advisories/new).
+[GitHub Security Advisories](https://github.com/fialhosoft/agentlink/security/advisories/new).
 This opens a private discussion with maintainers before anything is public.
 
 Please do not open a public issue for a vulnerability.

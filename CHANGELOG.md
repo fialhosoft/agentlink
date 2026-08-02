@@ -47,5 +47,5 @@ without copying a single file.
 - `#![forbid(unsafe_code)]` across every crate.
 - No network access, no code execution, no telemetry.
 
-[Unreleased]: https://github.com/agentlink-dev/agentlink/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/agentlink-dev/agentlink/releases/tag/v0.0.1
+[Unreleased]: https://github.com/fialhosoft/agentlink/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/fialhosoft/agentlink/releases/tag/v0.0.1

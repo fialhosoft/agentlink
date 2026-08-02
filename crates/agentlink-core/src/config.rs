@@ -74,7 +74,7 @@ impl Config {
     pub fn render(&self) -> String {
         let body = toml::to_string_pretty(self).expect("config is always serialisable");
         format!(
-            "# agentlink configuration — https://github.com/agentlink-dev/agentlink\n\
+            "# agentlink configuration — https://github.com/fialhosoft/agentlink\n\
              #\n\
              # `providers` lists the agents to serve. Remove the key entirely to\n\
              # serve every agent agentlink knows about, including ones added by\n\

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Locates the prebuilt binary for this platform and hands control to it.
 //
-// npm installs exactly one of the `@agentlink/cli-*` optional dependencies —
-// whichever matches the host's `os` and `cpu` — so resolution here is a lookup,
-// not a download.
+// npm installs exactly one of the `@fialhosoft/agentlink-*` optional
+// dependencies — whichever matches the host's `os` and `cpu` — so resolution
+// here is a lookup, not a download.
 
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -15,7 +15,7 @@ const EXECUTABLE = process.platform === "win32" ? "agentlink.exe" : "agentlink";
 
 function resolveBinary() {
   try {
-    return require.resolve(`@agentlink/cli-${PLATFORM}/${EXECUTABLE}`);
+    return require.resolve(`@fialhosoft/agentlink-${PLATFORM}/${EXECUTABLE}`);
   } catch {
     return null;
   }
@@ -31,13 +31,13 @@ if (!binary) {
       "If your platform should be supported, this usually means the optional",
       "dependency was skipped during install. Try:",
       "",
-      "  npm install agentlink --force",
+      "  npm install @fialhosoft/agentlink --force",
       "",
       "Otherwise, build from source:",
       "",
       "  cargo install agentlink-cli",
       "",
-      "and please open an issue at https://github.com/agentlink-dev/agentlink/issues",
+      "and please open an issue at https://github.com/fialhosoft/agentlink/issues",
     ].join("\n"),
   );
   process.exit(1);

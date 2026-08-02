@@ -5,8 +5,10 @@
 // The established way to serve both is the pattern esbuild, swc, Biome and
 // Rolldown use: one thin wrapper package that declares an optional dependency
 // per platform, each carrying a prebuilt binary. npm installs only the one
-// matching the host, so `npm i -g agentlink` downloads a single binary and no
-// Rust toolchain is involved.
+// matching the host, so `npm i -g @fialhosoft/agentlink` downloads a single
+// binary and no Rust toolchain is involved. The package is scoped under the
+// `@fialhosoft` npm org rather than a standalone `agentlink` name; the `bin`
+// field below still exposes a bare `agentlink` command once installed.
 //
 // Usage: node scripts/build-npm.mjs <version> <binaries-dir>
 
@@ -32,9 +34,9 @@ const PLATFORMS = [
 const SHARED = {
   version,
   license: "Apache-2.0",
-  homepage: "https://github.com/agentlink-dev/agentlink",
-  repository: { type: "git", url: "git+https://github.com/agentlink-dev/agentlink.git" },
-  bugs: { url: "https://github.com/agentlink-dev/agentlink/issues" },
+  homepage: "https://github.com/fialhosoft/agentlink",
+  repository: { type: "git", url: "git+https://github.com/fialhosoft/agentlink.git" },
+  bugs: { url: "https://github.com/fialhosoft/agentlink/issues" },
 };
 
 const out = "npm/dist";
@@ -51,8 +53,8 @@ for (const platform of PLATFORMS) {
     process.exit(1);
   }
 
-  const name = `@agentlink/cli-${platform.key}`;
-  const dir = join(out, `cli-${platform.key}`);
+  const name = `@fialhosoft/agentlink-${platform.key}`;
+  const dir = join(out, `agentlink-${platform.key}`);
   mkdirSync(dir, { recursive: true });
 
   const source = join(binariesDir, `bin-${platform.key}`, platform.exe);
@@ -92,7 +94,7 @@ writeFileSync(
   join(wrapper, "package.json"),
   `${JSON.stringify(
     {
-      name: "agentlink",
+      name: "@fialhosoft/agentlink",
       ...SHARED,
       description:
         "One brain for every AI coding agent — shared rules and skills with zero file duplication",
