@@ -1,0 +1,55 @@
+name: Release-plz
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # Bumps Cargo.toml/Cargo.lock from Conventional Commits since the last tag
+  # and opens (or updates) a release PR. Never touches CHANGELOG.md — see
+  # release-plz.toml.
+  release-plz-pr:
+    name: Release-plz PR
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'fialhosoft'
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: release-plz-pr-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: release-plz/action@v0.5
+        with:
+          command: release-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Runs after the release PR is merged: the workspace version on main no
+  # longer matches the latest tag, so this creates and pushes `v{version}`.
+  # That tag push is what triggers release.yml to build and publish.
+  release-plz-tag:
+    name: Release-plz tag
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'fialhosoft'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: release-plz/action@v0.5
+        with:
+          command: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
