@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/agentlink-domain", "crates/agentlink-fs", "crates/agentlink-cli"]
 
 [workspace.package]
-version = "0.0.2"
+version = "0.0.3"
 edition = "2024"
 rust-version = "1.85"
 license = "Apache-2.0"
@@ -14,8 +14,8 @@ keywords = ["ai", "agents", "claude", "cursor", "codex"]
 categories = ["command-line-utilities", "development-tools"]
 
 [workspace.dependencies]
-agentlink-domain = { path = "crates/agentlink-domain", version = "0.0.2" }
-agentlink-fs = { path = "crates/agentlink-fs", version = "0.0.2" }
+agentlink-domain = { path = "crates/agentlink-domain", version = "0.0.3" }
+agentlink-fs = { path = "crates/agentlink-fs", version = "0.0.3" }
 
 serde = { version = "1", features = ["derive"] }
 toml = "0.9"

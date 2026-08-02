@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "agentlink-cli"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "agentlink-domain",
  "agentlink-fs",
@@ -16,7 +16,7 @@ dependencies = [
 
 [[package]]
 name = "agentlink-domain"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "serde",
  "thiserror",
@@ -25,7 +25,7 @@ dependencies = [
 
 [[package]]
 name = "agentlink-fs"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "agentlink-domain",
  "junction",
