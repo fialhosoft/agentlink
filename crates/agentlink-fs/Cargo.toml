@@ -12,7 +12,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-agentlink-core.workspace = true
+agentlink-domain.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 # Junction points are the reason agentlink works on Windows without elevation,

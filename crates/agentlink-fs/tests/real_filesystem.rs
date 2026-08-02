@@ -13,9 +13,9 @@ use std::fs;
 #[cfg(windows)]
 use std::path::Path;
 
-use agentlink_core::model::{Entry, LinkSupport, LinkTarget, NodeKind, Via};
-use agentlink_core::path::RelPath;
-use agentlink_core::workspace::Workspace;
+use agentlink_domain::model::{Entry, LinkSupport, LinkTarget, NodeKind, Via};
+use agentlink_domain::path::RelPath;
+use agentlink_domain::workspace::Workspace;
 use agentlink_fs::RootedWorkspace;
 
 fn rel(path: &str) -> RelPath {

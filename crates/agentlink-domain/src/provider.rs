@@ -2,7 +2,7 @@
 //!
 //! A provider — an AI coding agent that agentlink knows how to serve — is
 //! described entirely by a TOML manifest. Adding support for a new agent is one
-//! file in `providers/` (see `crates/agentlink-core/providers/`) plus a test
+//! file in `providers/` (see `crates/agentlink-domain/providers/`) plus a test
 //! fixture; no core change, no recompilation of
 //! anyone's mental model, and no Rust knowledge required.
 //!

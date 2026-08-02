@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/agentlink-core", "crates/agentlink-fs", "crates/agentlink-cli"]
+members = ["crates/agentlink-domain", "crates/agentlink-fs", "crates/agentlink-cli"]
 
 [workspace.package]
 version = "0.0.1"
@@ -14,7 +14,7 @@ keywords = ["ai", "agents", "claude", "cursor", "codex"]
 categories = ["command-line-utilities", "development-tools"]
 
 [workspace.dependencies]
-agentlink-core = { path = "crates/agentlink-core", version = "0.0.1" }
+agentlink-domain = { path = "crates/agentlink-domain", version = "0.0.1" }
 agentlink-fs = { path = "crates/agentlink-fs", version = "0.0.1" }
 
 serde = { version = "1", features = ["derive"] }

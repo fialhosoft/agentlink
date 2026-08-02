@@ -4,14 +4,14 @@
 # Provider manifests are the contribution path we most want to keep open. They
 # carry no executable logic and are validated in CI, so review here is about
 # whether the paths are right — not about code.
-/crates/agentlink-core/providers/  @fialhosoft/providers @fialhosoft/maintainers
+/crates/agentlink-domain/providers/  @fialhosoft/providers @fialhosoft/maintainers
 
 # The safety-critical surface: anything that can remove, overwrite or relocate a
 # path. Changes here need a maintainer.
 /crates/agentlink-fs/   @fialhosoft/maintainers
-/crates/agentlink-core/src/plan.rs   @fialhosoft/maintainers
-/crates/agentlink-core/src/apply.rs  @fialhosoft/maintainers
-/crates/agentlink-core/src/path.rs   @fialhosoft/maintainers
+/crates/agentlink-domain/src/plan.rs   @fialhosoft/maintainers
+/crates/agentlink-domain/src/apply.rs  @fialhosoft/maintainers
+/crates/agentlink-domain/src/path.rs   @fialhosoft/maintainers
 
 # Release and supply-chain configuration.
 /.github/workflows/     @fialhosoft/maintainers

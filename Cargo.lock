@@ -6,7 +6,7 @@ version = 4
 name = "agentlink-cli"
 version = "0.0.1"
 dependencies = [
- "agentlink-core",
+ "agentlink-domain",
  "agentlink-fs",
  "anyhow",
  "clap",
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "agentlink-core"
+name = "agentlink-domain"
 version = "0.0.1"
 dependencies = [
  "serde",
@@ -26,7 +26,7 @@ dependencies = [
 name = "agentlink-fs"
 version = "0.0.1"
 dependencies = [
- "agentlink-core",
+ "agentlink-domain",
  "junction",
  "tempfile",
 ]

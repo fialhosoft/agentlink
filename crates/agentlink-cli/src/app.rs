@@ -2,8 +2,8 @@
 
 use std::path::{Path, PathBuf};
 
-use agentlink_core::layout::{CONFIG_FILE, LOCAL_PROVIDERS_DIR, LOCK_FILE};
-use agentlink_core::{
+use agentlink_domain::layout::{CONFIG_FILE, LOCAL_PROVIDERS_DIR, LOCK_FILE};
+use agentlink_domain::{
     Config, Layout, Lock, Plan, Planner, Provider, Registry, RelPath, Workspace, gitignore, plan,
 };
 use agentlink_fs::RootedWorkspace;

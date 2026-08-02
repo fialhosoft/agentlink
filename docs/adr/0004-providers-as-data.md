@@ -16,11 +16,11 @@ if providers required code, picking Rust would be a serious adoption cost.
 
 ## Decision
 
-A provider is a TOML manifest in `crates/agentlink-core/providers/`. The build
+A provider is a TOML manifest in `crates/agentlink-domain/providers/`. The build
 script enumerates that directory and embeds every manifest via `include_str!`,
 so there is no list to update anywhere.
 
-The directory lives inside the `agentlink-core` crate rather than at the
+The directory lives inside the `agentlink-domain` crate rather than at the
 workspace root — a constraint discovered when the first `cargo publish` failed:
 `cargo` packages only files under a crate's own root, so a workspace-sibling
 `providers/` built fine from a git checkout but produced a broken tarball on

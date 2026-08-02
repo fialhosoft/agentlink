@@ -1,5 +1,5 @@
 [package]
-name = "agentlink-core"
+name = "agentlink-domain"
 description = "Domain model for agentlink: one brain for every AI coding agent"
 version.workspace = true
 edition.workspace = true

@@ -1,8 +1,8 @@
 //! Command implementations.
 
-use agentlink_core::layout::AGENTS_MD_TEMPLATE;
-use agentlink_core::model::Strategy;
-use agentlink_core::{Layout, ResourceKind, Via, Workspace, apply as execute, gitignore};
+use agentlink_domain::layout::AGENTS_MD_TEMPLATE;
+use agentlink_domain::model::Strategy;
+use agentlink_domain::{Layout, ResourceKind, Via, Workspace, apply as execute, gitignore};
 use anyhow::Result;
 
 use crate::app::{App, rel};
@@ -45,7 +45,7 @@ pub fn init(ui: Ui, dir: Option<std::path::PathBuf>) -> Result<i32> {
         ui.say(format!(
             "  {} {}",
             ui.green("created"),
-            agentlink_core::layout::CONFIG_FILE
+            agentlink_domain::layout::CONFIG_FILE
         ));
         app.initialised = true;
     }
@@ -80,7 +80,7 @@ fn run_apply(ui: Ui, app: &mut App, dry_run: bool, adopt: bool) -> Result<i32> {
     // Run to a fixed point. Adopting content into the canonical layout makes that
     // resource exist for the first time, which unblocks every other provider that
     // was skipped for want of anything to share.
-    let mut total = agentlink_core::ApplyReport::default();
+    let mut total = agentlink_domain::ApplyReport::default();
     let mut passes = 0;
     loop {
         let report = execute::apply(&plan, &app.ws, &mut app.lock)?;
@@ -496,7 +496,7 @@ fn check(ui: Ui, ok: bool, label: &str, detail: &str) {
     ));
 }
 
-fn exit_for(plan: &agentlink_core::Plan) -> i32 {
+fn exit_for(plan: &agentlink_domain::Plan) -> i32 {
     if plan.writes().count() > 0 || plan.blocked().count() > 0 {
         EXIT_PENDING
     } else {
@@ -529,7 +529,7 @@ fn adoptable(app: &App, resource: ResourceKind) -> Result<Vec<String>> {
 /// Returns an empty string when the entry is not a stub or its provider is no
 /// longer known, which makes the comparison in `clean` fail safe: an unmatched
 /// file is kept, never deleted.
-fn expected_stub(app: &App, entry: &agentlink_core::lock::LockEntry) -> String {
+fn expected_stub(app: &App, entry: &agentlink_domain::lock::LockEntry) -> String {
     if entry.via != Via::Import {
         return String::new();
     }
@@ -543,7 +543,7 @@ fn expected_stub(app: &App, entry: &agentlink_core::lock::LockEntry) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use agentlink_core::Plan;
+    use agentlink_domain::Plan;
 
     #[test]
     fn a_clean_plan_exits_zero() {

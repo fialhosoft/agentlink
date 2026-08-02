@@ -3,8 +3,8 @@
 //! Every blocked outcome renders the exact command that resolves it. A tool that
 //! refuses to guess owes the user a next step.
 
-use agentlink_core::plan::{Blocked, Outcome, Plan, Skip, Step};
-use agentlink_core::{ResourceKind, Via};
+use agentlink_domain::plan::{Blocked, Outcome, Plan, Skip, Step};
+use agentlink_domain::{ResourceKind, Via};
 
 use crate::ui::{Ui, pad};
 
@@ -223,7 +223,7 @@ pub fn dry_run_note(ui: Ui, plan: &Plan) {
 }
 
 /// Renders what an apply actually did.
-pub fn report(ui: Ui, report: agentlink_core::ApplyReport) {
+pub fn report(ui: Ui, report: agentlink_domain::ApplyReport) {
     let mut parts = Vec::new();
     if report.created > 0 {
         parts.push(ui.green(&format!("{} created", report.created)));

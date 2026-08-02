@@ -6,7 +6,7 @@ description: Add support for a new AI coding agent to agentlink, or correct an e
 # Adding a provider
 
 Adding an agent to agentlink is **one TOML file and zero lines of Rust**. The
-build script enumerates `crates/agentlink-core/providers/*.toml` and embeds
+build script enumerates `crates/agentlink-domain/providers/*.toml` and embeds
 each one, so there is no list to register in.
 
 ## 1. Find out where the agent actually reads from
@@ -19,7 +19,7 @@ docs are frequently aspirational or stale. The two questions:
 
 ## 2. Write the manifest
 
-Create `crates/agentlink-core/providers/<agent-id>.toml`. The id is lowercase
+Create `crates/agentlink-domain/providers/<agent-id>.toml`. The id is lowercase
 kebab-case.
 
 ```toml
@@ -79,7 +79,7 @@ setup. Directories (skills) never need a fallback — junctions always work.
 ## 4. Verify
 
 ```console
-cargo test -p agentlink-core registry
+cargo test -p agentlink-domain registry
 ```
 
 The registry test suite parses every shipped manifest and asserts its

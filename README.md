@@ -146,7 +146,7 @@ running the same Windows build can differ, so agentlink tries and adapts.
 A provider is **data, not code**. Adding one is a single file:
 
 ```toml
-# crates/agentlink-core/providers/my-agent.toml
+# crates/agentlink-domain/providers/my-agent.toml
 schema = 1
 id = "my-agent"
 name = "My Agent"
@@ -158,7 +158,7 @@ path = ".my-agent/skills"
 ```
 
 That is the entire change. The build embeds every manifest in
-`crates/agentlink-core/providers/` automatically — no list to update, no Rust
+`crates/agentlink-domain/providers/` automatically — no list to update, no Rust
 to write, no core to touch.
 
 Manifests are validated at load time: a `native` claim is checked against the

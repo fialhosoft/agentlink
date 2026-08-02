@@ -30,12 +30,12 @@ cargo run -p agentlink-cli -- status
 ```text
 agentlink-cli     composition root, human-facing output
       ↓
-agentlink-core    pure domain — no std::fs anywhere
+agentlink-domain    pure domain — no std::fs anywhere
       ↑
 agentlink-fs      adapter: symlinks, junctions, privilege probing
 ```
 
-`agentlink-core` never touches the filesystem. It depends on the `Workspace`
+`agentlink-domain` never touches the filesystem. It depends on the `Workspace`
 trait; `agentlink-fs` implements it for real and `testing::FakeWorkspace`
 implements it in memory. That is why tests can simulate Windows without symlink
 privileges on a Linux runner.
@@ -55,9 +55,9 @@ instead.
 ## Conventions
 
 - Paths in the domain are `RelPath`: normalised, always `/`-separated, and unable
-  to escape the workspace. Never introduce a raw `PathBuf` into `agentlink-core`.
+  to escape the workspace. Never introduce a raw `PathBuf` into `agentlink-domain`.
 - Adding an agent must stay a **single TOML file** in
-  `crates/agentlink-core/providers/`. If a change
+  `crates/agentlink-domain/providers/`. If a change
   would require Rust to support a new agent, that is a design problem — see
   [ADR 0004](docs/adr/0004-providers-as-data.md).
 - `#![forbid(unsafe_code)]` in every crate. Windows junctions go through the
@@ -68,11 +68,11 @@ instead.
 
 ## Where to be careful
 
-- `crates/agentlink-core/src/plan.rs` — the capability lattice. Every new branch
+- `crates/agentlink-domain/src/plan.rs` — the capability lattice. Every new branch
   needs a test for the case where the user's content is at risk.
 - `crates/agentlink-fs/src/lib.rs` — the only place with platform-specific code.
   Windows behaviour differs by *privilege*, not just by OS.
-- `crates/agentlink-core/src/gitignore.rs` — edits a file the user owns. It must
+- `crates/agentlink-domain/src/gitignore.rs` — edits a file the user owns. It must
   preserve surrounding content and existing line endings exactly.
 
 ## Do not

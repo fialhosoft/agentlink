@@ -7,7 +7,7 @@ Thank you for helping. The single most valuable contribution to this project is
 
 This is one file. Really.
 
-Create `crates/agentlink-core/providers/<agent-id>.toml`:
+Create `crates/agentlink-domain/providers/<agent-id>.toml`:
 
 ```toml
 # My Agent — https://example.com/my-agent
@@ -28,7 +28,7 @@ path = ".my-agent/skills"
 note = "Agent Skills open spec; identical SKILL.md format, different directory."
 ```
 
-Then run `cargo test -p agentlink-core` — the registry test suite parses and
+Then run `cargo test -p agentlink-domain` — the registry test suite parses and
 validates every shipped manifest, so a mistake fails immediately.
 
 ### Choosing a strategy
@@ -87,7 +87,7 @@ cargo fmt
 ```text
 agentlink-cli     composition root, human-facing output
       ↓
-agentlink-core    pure domain — no std::fs anywhere
+agentlink-domain    pure domain — no std::fs anywhere
       ↑
 agentlink-fs      adapter: symlinks, junctions, privilege probing
 ```

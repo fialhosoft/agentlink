@@ -28,7 +28,7 @@ Every path in a manifest is parsed into `RelPath`, which rejects absolute paths,
 Windows drive letters, UNC prefixes and any `..` segment. A malicious or mistaken
 manifest therefore **cannot** address `~/.ssh`, `C:\Windows`, or anything outside
 the workspace root. This is validated at load time, before any planning, and is
-covered by tests in `crates/agentlink-core/src/path.rs`.
+covered by tests in `crates/agentlink-domain/src/path.rs`.
 
 ### agentlink does not delete content it did not create
 

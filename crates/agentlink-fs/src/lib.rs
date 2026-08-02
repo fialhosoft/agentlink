@@ -2,7 +2,7 @@
 //!
 //! This crate is the only place that knows about native paths, separators,
 //! reparse points and platform privileges. It implements
-//! [`agentlink_core::Workspace`] against a real rooted directory so
+//! [`agentlink_domain::Workspace`] against a real rooted directory so
 //! the domain can stay a pure function of observable state.
 //!
 //! Three platform facts shape everything here:
@@ -25,9 +25,9 @@ use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
 
-use agentlink_core::model::{Entry, LinkSupport, LinkTarget, NodeKind, Via};
-use agentlink_core::path::RelPath;
-use agentlink_core::workspace::{FsError, FsResult, Workspace};
+use agentlink_domain::model::{Entry, LinkSupport, LinkTarget, NodeKind, Via};
+use agentlink_domain::path::RelPath;
+use agentlink_domain::workspace::{FsError, FsResult, Workspace};
 
 /// A real directory, viewed through workspace-relative paths.
 #[derive(Debug, Clone)]

@@ -19,7 +19,7 @@ That reframing is what produces an architecture with almost no moving parts.
 └───────────────────┬──────────────────────────┘
                     │ depends on
 ┌───────────────────▼──────────────────────────┐
-│ agentlink-core            (no std::fs)       │
+│ agentlink-domain            (no std::fs)       │
 │   model · path · layout · provider           │
 │   registry · plan · apply · lock · gitignore │
 │                                              │
@@ -34,7 +34,7 @@ That reframing is what produces an architecture with almost no moving parts.
 └──────────────────────────────────────────────┘
 ```
 
-Dependencies point inward. `agentlink-core` defines the `Workspace` port and
+Dependencies point inward. `agentlink-domain` defines the `Workspace` port and
 never names a concrete filesystem; `agentlink-fs` is one adapter and
 `testing::FakeWorkspace` is another.
 
@@ -126,7 +126,7 @@ where a derived file genuinely can drift from its source.
 
 | To add | Change | Rust needed |
 |---|---|---|
-| An agent | one file in `crates/agentlink-core/providers/` | none |
+| An agent | one file in `crates/agentlink-domain/providers/` | none |
 | A resource kind | a `ResourceKind` variant + canonical path in `layout.rs` | small |
 | A link mechanism | a `Via` variant + adapter arm | small, adapter-local |
 | A materialisation strategy (e.g. `render`) | a `Strategy` variant + planner arm | the real work |

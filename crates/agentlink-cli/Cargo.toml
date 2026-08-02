@@ -16,13 +16,13 @@ name = "agentlink"
 path = "src/main.rs"
 
 [dependencies]
-agentlink-core.workspace = true
+agentlink-domain.workspace = true
 agentlink-fs.workspace = true
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 
 [dev-dependencies]
-agentlink-core = { workspace = true, features = ["testing"] }
+agentlink-domain = { workspace = true, features = ["testing"] }
 tempfile.workspace = true
 
 [lints.rust]

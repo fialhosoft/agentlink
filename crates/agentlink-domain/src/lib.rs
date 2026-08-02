@@ -29,7 +29,7 @@
 //! ```text
 //! agentlink-cli    composition root, human-facing output
 //!       ↓
-//! agentlink-core   this crate: pure domain, no `std::fs`
+//! agentlink-domain   this crate: pure domain, no `std::fs`
 //!       ↑
 //! agentlink-fs     adapter implementing [`Workspace`] against a real directory
 //! ```
