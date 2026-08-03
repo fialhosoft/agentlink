@@ -1,0 +1,65 @@
+name: Prepare release
+
+# Every push to main refreshes the release pull request, so the next release is
+# always visible as a diff: the version bump, the compiled changelog and the
+# change files it consumed. Merging that pull request is what releases — see
+# release.yml, which runs the whole pipeline in a single go.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+jobs:
+  prepare-release:
+    name: Refresh the release pull request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # PrepareRelease reads tags and history to work out the last release.
+          fetch-depth: 0
+          # Kept on deliberately: Knope pushes the `release` branch itself, so
+          # this job needs working git credentials, and they must outrank the
+          # default token for the reason given at the push step below.
+          token: ${{ secrets.RELEASE_PAT }}
+
+      # Change files are the only source of a release, so their absence is the
+      # honest signal that there is nothing to prepare. Checking it here keeps
+      # Knope's own "nothing to release" case a real error rather than something
+      # routinely swallowed by continue-on-error.
+      - name: Is there anything to release?
+        id: pending
+        run: |
+          if ls .changeset/*.md >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No change files — nothing to release."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure git
+        if: steps.pending.outputs.found == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - uses: knope-dev/action@v2.1.2
+        if: steps.pending.outputs.found == 'true'
+        with:
+          version: 0.23.0
+
+      # Needs a token that can push a branch and open a pull request. It must be
+      # a PAT rather than GITHUB_TOKEN: GitHub deliberately does not run
+      # workflows on pull requests opened by GITHUB_TOKEN, which would leave the
+      # release pull request sitting with no CI on it.
+      - name: Open or refresh the release pull request
+        if: steps.pending.outputs.found == 'true'
+        run: knope prepare-release --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}

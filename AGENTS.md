@@ -23,7 +23,24 @@ cargo test                      # unit + integration, ~1s
 cargo clippy --all-targets      # must be clean
 cargo fmt                       # rustfmt.toml, 100 columns
 cargo run -p agentlink-cli -- status
+knope document-change           # the change file every pull request needs
 ```
+
+## Never open a pull request without a change file
+
+Every pull request that changes what a user sees adds a file to `.changeset/`.
+CI fails without one, and the release is compiled from those files — so a
+missing change file means a release that cannot explain itself.
+
+The [document-change skill](.agents/skills/document-change/SKILL.md) has the
+format and the type table. In short: `.changeset/<name>.md`, front matter
+`default: <type>`, a `#` heading that reads as the release note.
+
+Work that changes nothing observable — refactors, tests, CI, docs — takes the
+`no changelog` label on the pull request instead.
+
+**Never hand-edit `CHANGELOG.md` or a version in `Cargo.toml`.** The release
+pull request writes both from the change files, and a manual edit is discarded.
 
 ## Architecture
 

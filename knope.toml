@@ -1,0 +1,96 @@
+# Release automation. See CONTRIBUTING.md for the workflow this implements.
+#
+# Every user-visible change arrives with a change file in .changeset/. Knope
+# compiles those files into CHANGELOG.md, derives the version bump from them,
+# and deletes them — so the changelog is a product of the pull requests that
+# made it, never something remembered at release time.
+
+[package]
+# The version lives in [workspace.package]; the three crates inherit it with
+# `version.workspace = true`, so this file is the only place it is written.
+# The `dependency` entries keep the intra-workspace pins in lockstep with it —
+# agentlink-cli depends on agentlink-fs depends on agentlink-domain, and a
+# mismatch there is a broken publish to crates.io.
+versioned_files = [
+    "Cargo.toml",
+    { path = "Cargo.toml", dependency = "agentlink-domain" },
+    { path = "Cargo.toml", dependency = "agentlink-fs" },
+    { path = "Cargo.lock", dependency = "agentlink-domain" },
+    { path = "Cargo.lock", dependency = "agentlink-fs" },
+    { path = "Cargo.lock", dependency = "agentlink-cli" },
+]
+changelog = "CHANGELOG.md"
+# The build jobs download every archive and checksum into artifacts/, and the
+# Release step attaches them. Knope creates the tag and the release together,
+# so nothing has to infer a tag from the ref it happens to be running on.
+assets = "artifacts/*"
+
+# Knope's built-in sections are named for semver impact (Breaking changes /
+# Features / Fixes). CHANGELOG.md promises Keep a Changelog, so the sections are
+# renamed to match it. The `types` are what you pick in `knope document-change`
+# and write in a change file's front matter; everything below `major`/`minor`
+# is a patch bump, which is what pre-1.0 semver wants anyway.
+extra_changelog_sections = [
+    { types = ["major"], name = "Breaking changes" },
+    { types = ["minor"], name = "Added" },
+    { types = ["changed"], name = "Changed" },
+    { types = ["deprecated"], name = "Deprecated" },
+    { types = ["removed"], name = "Removed" },
+    { types = ["patch"], name = "Fixed" },
+    { types = ["security"], name = "Security", footers = ["Security"] },
+]
+
+# Opens (or refreshes) the release pull request. Run from CI on every push to
+# main; the branch is disposable, so the push is a force-push.
+[[workflows]]
+name = "prepare-release"
+
+[[workflows.steps]]
+type = "Command"
+command = "git switch -c release"
+
+[[workflows.steps]]
+type = "PrepareRelease"
+
+[[workflows.steps]]
+type = "Command"
+command = "git commit -m \"chore: prepare release $version\""
+
+[[workflows.steps]]
+type = "Command"
+command = "git push --force --set-upstream origin release"
+
+[[workflows.steps]]
+type = "CreatePullRequest"
+base = "main"
+
+[workflows.steps.title]
+template = "chore: prepare release $version"
+
+[workflows.steps.body]
+template = """Merging this pull request releases $version.
+
+Knope built it from the change files in `.changeset/`. Merging it tags the
+release and runs the whole publish pipeline — binaries, GitHub release,
+crates.io and npm — in a single run. Nothing else needs to be triggered.
+
+$changelog"""
+
+# Tags the merge commit and publishes the GitHub release. Runs once the release
+# pull request above is merged.
+[[workflows]]
+name = "release"
+
+[[workflows.steps]]
+type = "Release"
+
+[changes]
+# Change files are the only source of release notes. Conventional commits still
+# decide nothing here on purpose: a commit subject is written for reviewers of a
+# diff, a change file is written for the person reading the release. Letting
+# both feed the changelog would also list the same change twice.
+ignore_conventional_commits = true
+
+[github]
+owner = "fialhosoft"
+repo = "agentlink"

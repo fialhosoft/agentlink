@@ -96,6 +96,43 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test -p agentlink-domain registry
 
+  # Releases are compiled from the change files in .changeset/, so a pull request
+  # that changes behaviour without leaving one ships invisibly — it would reach
+  # users with nothing in the changelog to explain it. This is the only thing
+  # standing between that and a release, so it is a required check.
+  #
+  # Work with genuinely nothing to announce (refactors, CI, tests, docs) carries
+  # the `no changelog` label instead.
+  change-file:
+    name: Change documented
+    if: >-
+      github.event_name == 'pull_request'
+      && github.head_ref != 'release'
+      && !contains(github.event.pull_request.labels.*.name, 'no changelog')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Require a change file
+        run: |
+          git fetch --quiet origin "${{ github.base_ref }}"
+          added=$(git diff --name-only --diff-filter=A \
+            "origin/${{ github.base_ref }}...HEAD" -- '.changeset/*.md')
+          if [ -z "$added" ]; then
+            echo "::error::This pull request adds no change file. Run 'knope document-change', or add the 'no changelog' label if it changes nothing a user would notice. See CONTRIBUTING.md#documenting-a-change."
+            exit 1
+          fi
+          echo "Documented by:"
+          echo "$added"
+      - uses: knope-dev/action@v2.1.2
+        with:
+          version: 0.23.0
+      # Malformed front matter fails the release, long after the pull request
+      # that introduced it. Parsing it here reports it to the author instead.
+      - name: Check it parses
+        run: knope prepare-release --dry-run
+
   deny:
     name: Licenses and advisories
     runs-on: ubuntu-latest

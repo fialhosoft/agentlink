@@ -6,9 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Entries below v0.1.0 describe a pre-release API that may change.
 
-## [Unreleased]
+Nothing is written here by hand. Each pull request adds a change file under
+[`.changeset/`](.changeset/), and the release compiles them into the section
+below — so unreleased changes live in that directory, not in this file. See
+[CONTRIBUTING.md](CONTRIBUTING.md#documenting-a-change) for how to write one.
 
-## [0.0.2] — 2026-08-02
+## 0.0.2 (2026-08-02)
 
 ### Added
 
@@ -24,7 +27,7 @@ Entries below v0.1.0 describe a pre-release API that may change.
   created for it, announced by `status` before `apply` performs it. A path that
   no longer matches what agentlink created is kept and simply disowned.
 
-## [0.0.1] — 2026-08-01
+## 0.0.1 (2026-08-01)
 
 First release. Shares **instructions** and **skills** across six AI coding agents
 without copying a single file.
@@ -62,7 +65,3 @@ without copying a single file.
   the workspace.
 - `#![forbid(unsafe_code)]` across every crate.
 - No network access, no code execution, no telemetry.
-
-[Unreleased]: https://github.com/fialhosoft/agentlink/compare/v0.0.2...HEAD
-[0.0.2]: https://github.com/fialhosoft/agentlink/compare/v0.0.1...v0.0.2
-[0.0.1]: https://github.com/fialhosoft/agentlink/releases/tag/v0.0.1
