@@ -125,7 +125,7 @@ jobs:
           fi
           echo "Documented by:"
           echo "$added"
-      - uses: knope-dev/action@v2
+      - uses: knope-dev/action@v2.1.2
         with:
           version: 0.23.0
       # Malformed front matter fails the release, long after the pull request
